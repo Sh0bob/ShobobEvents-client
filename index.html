@@ -73,7 +73,7 @@
         sw.postMessage({ update: true });
       })
     }
-
+    /* SERVICE WORKER DISABLED FOR EVENT CLIENT
     document.addEventListener("DOMContentLoaded", function () {
       if (!("serviceWorker" in navigator)) return;
       navigator.serviceWorker.addEventListener("controllerchange", () => {
@@ -99,6 +99,7 @@
         registration.addEventListener('updatefound', handleInstalling);
       });
     });
+    */
   </script>
 <style id="ss"></style></head>
 
