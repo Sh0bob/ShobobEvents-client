@@ -173,81 +173,60 @@
   </script>
 
   <script>
-  (() => {
-    const WANT = {
-      moveJoinTo: "Multiplayer",
-      moveSettingsTo: "Custom Scenario",
-      joinText: "Join/Create custom lobby",
-      settingsText: "FX Client settings",
-    };
-  
-    function findBtnContains(text) {
-      const btns = Array.from(document.querySelectorAll("button"));
-      return btns.find(b => (b.innerText || "").includes(text));
-    }
+(() => {
+  function btn(label) {
+    return Array.from(document.querySelectorAll("button"))
+      .find(b => (b.innerText || "").trim().includes(label));
+  }
 
-    function placeLike(sourceBtn, targetBtn) {
-      const srcRect = sourceBtn.getBoundingClientRect();
-      const tgtRect = targetBtn.getBoundingClientRect();
+  function copyInlineBox(from, to) {
+    // Copy the positioning box (these are inline in your screenshot)
+    to.style.position = "absolute";
+    to.style.left = from.style.left;
+    to.style.top = from.style.top;
+    to.style.width = from.style.width;
+    to.style.height = from.style.height;
 
-      // Convert viewport coords -> parent coords.
-      // These menu buttons are usually absolutely positioned under body.
-      const parent = targetBtn.offsetParent || document.body;
-      const parentRect = parent.getBoundingClientRect();
+    // Optional: match the look (font/border) so it feels like a main button
+    to.style.font = from.style.font;
+    to.style.border = from.style.border;
+  }
 
-      const left = srcRect.left - parentRect.left;
-      const top  = srcRect.top  - parentRect.top;
+  function applyOnce() {
+    const multiplayer = btn("Multiplayer");
+    const scenario = btn("Custom Scenario");
+    const settings = btn("FX Client settings");
+    const lobby = btn("Join/Create custom lobby");
 
-      targetBtn.style.position = "absolute";
-      targetBtn.style.left = `${left}px`;
-      targetBtn.style.top = `${top}px`;
-      targetBtn.style.width = `${srcRect.width}px`;
-      targetBtn.style.height = `${srcRect.height}px`;
+    if (!multiplayer || !scenario || !settings || !lobby) return false;
 
-      // Optional: copy font + border so it matches the “main button” style
-      const cs = getComputedStyle(sourceBtn);
-      targetBtn.style.font = cs.font;
-      targetBtn.style.border = cs.border;
-    }
+    // Put lobby in Multiplayer slot
+    copyInlineBox(multiplayer, lobby);
 
-    function isMenu() {
-      // Best-effort; if MenuManager exists, only run on main menu
-      try { return window.MenuManager?.getState?.() === 6; } catch { return true; }
-    }
+    // Put settings in Custom Scenario slot
+    copyInlineBox(scenario, settings);
 
-    function apply() {
-      if (!isMenu()) return;
+    // Remove old big buttons
+    multiplayer.remove();
+    scenario.remove();
 
-      const multi = findBtnContains(WANT.moveJoinTo);
-      const scen  = findBtnContains(WANT.moveSettingsTo);
-      const join  = findBtnContains(WANT.joinText);
-      const sett  = findBtnContains(WANT.settingsText);
+    return true;
+  }
 
-      if (!multi || !scen || !join || !sett) return;
- 
-      // Move the two buttons into the big slots
-      placeLike(multi, join);
-      placeLike(scen, sett);
+  // Enforce for a while because the menu can recreate buttons.
+  let tries = 0;
+  const timer = setInterval(() => {
+    tries++;
+    applyOnce();
+    if (tries >= 50) clearInterval(timer); // ~10 seconds
+  }, 200);
 
-      // Remove the old ones
-      multi.remove();
-      scen.remove();
-    }
+  // Also re-apply if DOM changes (extra safety)
+  const mo = new MutationObserver(() => applyOnce());
+  mo.observe(document.documentElement, { childList: true, subtree: true });
 
-    // Re-apply for a short while because the UI can re-render buttons after load
-    let ticks = 0;
-    const timer = setInterval(() => {
-      ticks++;
-      apply();
-      if (ticks > 80) clearInterval(timer); // ~20 seconds
-    }, 250);
- 
-    // Also re-apply when DOM changes (more reliable than hoping timing is right)
-    const mo = new MutationObserver(() => apply());
-    mo.observe(document.documentElement, { childList: true, subtree: true });
-
-    console.log("[TTWC] button mover installed");
-  })();
-  </script>
+  console.log("[TTWC] button swapper installed");
+})();
+</script>
   
 <div style="position: absolute; left: 25px; top: 1115.8px; width: 656.9px; height: 164.2px; border: 4.3px solid rgb(255, 255, 255);"><div style="width: 25%; height: 100%; background-color: rgba(0, 0, 0, 0.85); border-right: 4.3px solid rgb(255, 255, 255);"><canvas width="119" height="100" style="width: 24%; position: absolute; left: 0px; top: 7%;"></canvas></div><div style="position: absolute; width: 75%; height: 100%; background-color: rgba(0, 0, 0, 0.85); right: 0px; top: 0px; overflow: auto hidden; white-space: nowrap;"><div style="max-height: 100%; height: 100%;"><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(60, 0, 60, 0.85); border-top: none; border-right: 4.3px solid rgb(255, 255, 255); border-bottom: none; border-left: none; border-image: initial; font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 1.1em; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; padding: 0em 0.3em; position: absolute; max-height: 100%; height: 100%; left: 0px; width: 279.2px;"><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 26.6px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">Top Clan</span><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: bold; font-stretch: inherit; font-size: 41.2px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">[OG]</span></button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(0, 60, 60, 0.85); border-top: none; border-right: 4.3px solid rgb(255, 255, 255); border-bottom: none; border-left: none; border-image: initial; font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 1.1em; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; padding: 0em 0.3em; position: absolute; max-height: 100%; height: 100%; left: 279px;"><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 26.6px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">Best Clan Member</span><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: bold; font-stretch: inherit; font-size: 41.2px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">[CAT]👀Simon☕️</span></button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(60, 0, 0, 0.85); border-top: none; border-right: 4.3px solid rgb(255, 255, 255); border-bottom: none; border-left: none; border-image: initial; font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 1.1em; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; padding: 0em 0.3em; position: absolute; max-height: 100%; height: 100%; left: 680px;"><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 26.6px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">Top Admin</span><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: bold; font-stretch: inherit; font-size: 41.2px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">autistic[af]</span></button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(0, 60, 0, 0.8); border-top: none; border-right: 4.3px solid rgb(255, 255, 255); border-bottom: none; border-left: none; border-image: initial; font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 1.1em; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; padding: 0em 0.3em; position: absolute; max-height: 100%; height: 100%; left: 934px;"><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 26.6px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">Best 1v1 Player</span><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: bold; font-stretch: inherit; font-size: 41.2px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">Joshua18</span></button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(70, 40, 0, 0.85); border-top: none; border-right: 4.3px solid rgb(255, 255, 255); border-bottom: none; border-left: none; border-image: initial; font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 1.1em; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; padding: 0em 0.3em; position: absolute; max-height: 100%; height: 100%; left: 1163px;"><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 26.6px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">Best Battle Royale Player</span><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: bold; font-stretch: inherit; font-size: 41.2px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">W</span></button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(60, 60, 0, 0.85); border-top: none; border-right: 4.3px solid rgb(255, 255, 255); border-bottom: none; border-left: none; border-image: initial; font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 1.1em; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; padding: 0em 0.3em; position: absolute; max-height: 100%; height: 100%; left: 1484px;"><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 26.6px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">Richest Player</span><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: bold; font-stretch: inherit; font-size: 41.2px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">[OG] 𝗛𝗬𝗗𝗥𝗔©</span></button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(70, 40, 0, 0.85); border: none; font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 1.1em; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; padding: 0em 0.3em; position: absolute; max-height: 100%; height: 100%; left: 1819px;"><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: inherit; font-stretch: inherit; font-size: 26.6px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">Top Patreon</span><span style="color: rgb(255, 255, 255); font-style: inherit; font-variant: inherit; font-weight: bold; font-stretch: inherit; font-size: 41.2px; line-height: inherit; font-family: inherit; font-optical-sizing: inherit; font-size-adjust: inherit; font-kerning: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-language-override: inherit; margin: 0.1em 0.6em; pointer-events: none; white-space: nowrap; display: block;">[CN] Cosmic</span></button></div></div></div><input type="text" id="input0" placeholder="Your Kingdom&#39;s Name" style="width: 443.1px; user-select: none; outline: none; resize: none; border: 4.3px solid rgb(255, 255, 255); font: 41.73px system-ui; color: rgb(255, 255, 255); background-color: rgba(0, 0, 0, 0.7); padding: 0.1em 0.2em; position: absolute; text-align: center; left: 1010.5px; top: 502.9px; height: 83.5px;"><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(0, 70, 0, 0.85); border: 4.3px solid rgb(255, 255, 255); font: 33.91px system-ui; padding: 0em 0.3em; position: absolute; left: 1010.5px; top: 598.9px; width: 263.3px; height: 151px;">⚔️<br>Multiplayer</button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(0, 60, 60, 0.85); border: 4.3px solid rgb(255, 255, 255); font: 33.91px system-ui; padding: 0em 0.3em; position: absolute; left: 1286.3px; top: 598.9px; width: 263.3px; height: 151px;">🗡️<br>Custom Scenario</button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(70, 50, 20, 0.85); border: 4.3px solid rgb(255, 255, 255); font: 33.91px system-ui; padding: 0em 0.3em; position: absolute; left: 1010.5px; top: 762.4px; width: 263.3px; height: 151px;">🔑<br>My Account</button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(80, 60, 60, 0.85); border: 4.3px solid rgb(255, 255, 255); font: 33.91px system-ui; padding: 0em 0.3em; position: absolute; left: 1286.3px; top: 762.4px; width: 263.3px; height: 151px;">☰<br>Game Menu</button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgb(206, 52, 76); border: 4.3px solid rgb(255, 255, 255); font: 33.91px system-ui; padding: 0em 0.3em; position: absolute; left: 1466.1px; top: 502.9px; width: 83.5px; height: 83.5px;"></button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(0, 0, 20, 0.5); border: 4.3px solid rgb(255, 255, 255); font: 33.91px system-ui; padding: 0em 0.3em; position: absolute; left: 1010.5px; top: 925.8px; width: 539px; height: 50.3px;">FX Client settings</button><button style="color: rgb(255, 255, 255); user-select: none; outline: none; overflow-wrap: break-word; background-color: rgba(20, 9, 77, 0.5); border: 4.3px solid rgb(255, 255, 255); font: 33.91px system-ui; padding: 0em 0.3em; position: absolute; left: 1010.5px; top: 988.1px; width: 539px; height: 50.3px;">Join/Create custom lobby</button></body></html>
