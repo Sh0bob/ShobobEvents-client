@@ -161,70 +161,77 @@
   <script src="./FX Client_files/game.js"></script>
   
   <script>
-  setInterval(() => {
-    document.querySelectorAll("button").forEach(btn => {
-      const text = btn.innerText.trim();
-
-      if (text.includes("Multiplayer") || text.includes("Custom Scenario")) {
-      btn.remove();
-      }
-    });
-  }, 500);
-  </script>
-
-  <script>
 (() => {
   function findBtn(label) {
     return Array.from(document.querySelectorAll("button"))
       .find(b => (b.innerText || "").trim().includes(label));
   }
 
-  function copyBox(from, to) {
-    if (!from || !to) return;
-    to.style.position = "absolute";
-    to.style.left = from.style.left;
-    to.style.top = from.style.top;
-    to.style.width = from.style.width;
-    to.style.height = from.style.height;
+  // Stores target positions once we capture them
+  const targets = {
+    lobby: null,    // where Join/Create should go (Multiplayer slot)
+    settings: null  // where FX settings should go (Custom Scenario slot)
+  };
 
-    // Match main-button feel
-    to.style.font = from.style.font;
-    to.style.border = from.style.border;
+  function captureTargetFrom(btn) {
+    // Prefer inline style values if present (they are in your case)
+    const left = btn.style.left || (btn.getBoundingClientRect().left + "px");
+    const top = btn.style.top || (btn.getBoundingClientRect().top + "px");
+    const width = btn.style.width || (btn.getBoundingClientRect().width + "px");
+    const height = btn.style.height || (btn.getBoundingClientRect().height + "px");
+    const font = btn.style.font || getComputedStyle(btn).font;
+    const border = btn.style.border || getComputedStyle(btn).border;
+    const bg = btn.style.backgroundColor || getComputedStyle(btn).backgroundColor;
+
+    return { left, top, width, height, font, border, bg };
+  }
+
+  function applyBox(to, box) {
+    if (!to || !box) return;
+
+    // Use !important so we win the cascade; we will also reapply every frame anyway.
+    to.style.setProperty("position", "absolute", "important");
+    to.style.setProperty("left", box.left, "important");
+    to.style.setProperty("top", box.top, "important");
+    to.style.setProperty("width", box.width, "important");
+    to.style.setProperty("height", box.height, "important");
+    to.style.setProperty("font", box.font, "important");
+    to.style.setProperty("border", box.border, "important");
+
+    // Optional: match the big-button colours (you can comment these out if you want to keep originals)
+    to.style.setProperty("background-color", box.bg, "important");
   }
 
   function isMenu() {
-    // Best-effort check; if MenuManager isn't available, just run anyway.
+    // Best-effort; if MenuManager doesn't exist, still run (safe).
     try { return window.MenuManager?.getState?.() === 6; } catch { return true; }
   }
-
-  let removed = false;
 
   function tick() {
     if (isMenu()) {
       const multiplayer = findBtn("Multiplayer");
       const scenario = findBtn("Custom Scenario");
-      const settings = findBtn("FX Client settings");
       const lobby = findBtn("Join/Create custom lobby");
+      const settings = findBtn("FX Client settings");
 
-      // If we can see the source buttons, keep copying their boxes.
-      if (multiplayer && lobby) copyBox(multiplayer, lobby);
-      if (scenario && settings) copyBox(scenario, settings);
+      // Capture target boxes once (when the original big buttons exist)
+      if (!targets.lobby && multiplayer) targets.lobby = captureTargetFrom(multiplayer);
+      if (!targets.settings && scenario) targets.settings = captureTargetFrom(scenario);
 
-      // Remove the unwanted buttons once (they may reappear; that's ok)
+      // Remove unwanted buttons whenever they exist
       if (multiplayer) multiplayer.remove();
       if (scenario) scenario.remove();
 
-      removed = true;
-    } else {
-      // If we leave the menu, allow normal behaviour again
-      removed = false;
+      // Apply locked target positions (even after originals are gone)
+      applyBox(lobby, targets.lobby);
+      applyBox(settings, targets.settings);
     }
 
     requestAnimationFrame(tick);
   }
 
+  console.log("[TTWC] capture+lock script installed");
   requestAnimationFrame(tick);
-  console.log("[TTWC] menu button enforcer running");
 })();
 </script>
   
