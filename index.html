@@ -174,58 +174,57 @@
 
   <script>
 (() => {
-  function btn(label) {
+  function findBtn(label) {
     return Array.from(document.querySelectorAll("button"))
       .find(b => (b.innerText || "").trim().includes(label));
   }
 
-  function copyInlineBox(from, to) {
-    // Copy the positioning box (these are inline in your screenshot)
+  function copyBox(from, to) {
+    if (!from || !to) return;
     to.style.position = "absolute";
     to.style.left = from.style.left;
     to.style.top = from.style.top;
     to.style.width = from.style.width;
     to.style.height = from.style.height;
 
-    // Optional: match the look (font/border) so it feels like a main button
+    // Match main-button feel
     to.style.font = from.style.font;
     to.style.border = from.style.border;
   }
 
-  function applyOnce() {
-    const multiplayer = btn("Multiplayer");
-    const scenario = btn("Custom Scenario");
-    const settings = btn("FX Client settings");
-    const lobby = btn("Join/Create custom lobby");
-
-    if (!multiplayer || !scenario || !settings || !lobby) return false;
-
-    // Put lobby in Multiplayer slot
-    copyInlineBox(multiplayer, lobby);
-
-    // Put settings in Custom Scenario slot
-    copyInlineBox(scenario, settings);
-
-    // Remove old big buttons
-    multiplayer.remove();
-    scenario.remove();
-
-    return true;
+  function isMenu() {
+    // Best-effort check; if MenuManager isn't available, just run anyway.
+    try { return window.MenuManager?.getState?.() === 6; } catch { return true; }
   }
 
-  // Enforce for a while because the menu can recreate buttons.
-  let tries = 0;
-  const timer = setInterval(() => {
-    tries++;
-    applyOnce();
-    if (tries >= 50) clearInterval(timer); // ~10 seconds
-  }, 200);
+  let removed = false;
 
-  // Also re-apply if DOM changes (extra safety)
-  const mo = new MutationObserver(() => applyOnce());
-  mo.observe(document.documentElement, { childList: true, subtree: true });
+  function tick() {
+    if (isMenu()) {
+      const multiplayer = findBtn("Multiplayer");
+      const scenario = findBtn("Custom Scenario");
+      const settings = findBtn("FX Client settings");
+      const lobby = findBtn("Join/Create custom lobby");
 
-  console.log("[TTWC] button swapper installed");
+      // If we can see the source buttons, keep copying their boxes.
+      if (multiplayer && lobby) copyBox(multiplayer, lobby);
+      if (scenario && settings) copyBox(scenario, settings);
+
+      // Remove the unwanted buttons once (they may reappear; that's ok)
+      if (multiplayer) multiplayer.remove();
+      if (scenario) scenario.remove();
+
+      removed = true;
+    } else {
+      // If we leave the menu, allow normal behaviour again
+      removed = false;
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
+  console.log("[TTWC] menu button enforcer running");
 })();
 </script>
   
