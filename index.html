@@ -245,23 +245,69 @@
   <script src="./FX Client_files/game.js"></script>
   <script>
 (() => {
-  const originalFillText = CanvasRenderingContext2D.prototype.fillText;
-  const seen = new Set();
 
-  CanvasRenderingContext2D.prototype.fillText = function(text, x, y, maxWidth) {
+  const PLAYER_DATA = "ag";
+  const RAW_NAMES = "a1c";
+  const PLAYER_ID = "ep";
+  const TERRITORIES = "gt";
+
+  const anonMap = {};
+
+  function getPlayerNames() {
     try {
-      if (typeof text === "string" && text.trim()) {
-        if (!seen.has(text)) {
-          seen.add(text);
-          console.log("[TTWC fillText]", text);
-        }
-      }
-    } catch (e) {}
+      return window[PLAYER_DATA]?.[RAW_NAMES] || [];
+    } catch {
+      return [];
+    }
+  }
 
-    return originalFillText.call(this, text, x, y, maxWidth);
+  function getAnon(name) {
+    if (!anonMap[name]) {
+      anonMap[name] = "Anon " + Math.floor(1000 + Math.random()*9000);
+    }
+    return anonMap[name];
+  }
+
+  function isSpectating() {
+    try {
+      const game = window.aD;
+      const data = window.ag;
+
+      const myId = game?.[PLAYER_ID];
+      const territories = data?.[TERRITORIES];
+
+      if (!territories) return false;
+
+      return territories[myId] === 0;
+    } catch {
+      return false;
+    }
+  }
+
+  const originalFillText = CanvasRenderingContext2D.prototype.fillText;
+
+  CanvasRenderingContext2D.prototype.fillText = function(text,x,y,maxWidth){
+
+    try {
+
+      if(typeof text === "string" && !isSpectating()){
+
+        const players = getPlayerNames();
+
+        if(players.includes(text)){
+          text = getAnon(text);
+        }
+
+      }
+
+    } catch(e){}
+
+    return originalFillText.call(this,text,x,y,maxWidth);
+
   };
 
-  console.log("[TTWC] fillText logger active");
+  console.log("[TTWC] name randomiser active");
+
 })();
   </script>
   <script>
