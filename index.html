@@ -246,89 +246,101 @@
 
   <script>
 (() => {
-  const GAME_KEY = "aD";
-  const GAME_STATE_KEY = "a0u";
 
-  const anonMap = new Map();
-  let endScreenShown = false;
+const anonMap = new Map();
+let namesLoaded = false;
+let endScreen = false;
 
-  const UI_BLACKLIST = new Set([
-    "LEADERBOARD","Leaderboard","Humans","Bots","Spectators",
-    "Percentage","Income","Interest","Time","Density","Max Troops",
-    "ALL","CLAN","All","Clan","More","Quit Game",
-    "Choose your start position!","Map: Europe"
-  ]);
-
-  function inActiveGame() {
+function getPlayerNames() {
     try {
-      const g = window[GAME_KEY];
-      return !!g && g[GAME_STATE_KEY] !== 0;
+        const arr = window.ag?.a1c;
+        if (!Array.isArray(arr)) return [];
+        return arr.filter(n => typeof n === "string" && n.length > 0);
     } catch {
-      return false;
+        return [];
     }
-  }
+}
 
-  function shouldAnonymise() {
-    if (!inActiveGame()) {
-      endScreenShown = false;
-      anonMap.clear();
-      return false;
+function generateAnonMap() {
+
+    const names = getPlayerNames();
+    if (!names.length) return;
+
+    for (const name of names) {
+        if (!anonMap.has(name)) {
+            anonMap.set(name, "Anon " + Math.floor(1000 + Math.random()*9000));
+        }
     }
-    return !endScreenShown;
-  }
 
-  function isNumericLike(text) {
-    return /^[-+0-9.%: ()]+$/.test(text.trim());
-  }
+    namesLoaded = true;
+}
 
-  function looksLikePlayerName(text) {
-    const t = text.trim();
-    if (!t) return false;
-    if (UI_BLACKLIST.has(t)) return false;
-    if (isNumericLike(t)) return false;
-    if (t.length < 2) return false;
-    if (t.includes("Map:")) return false;
-    if (t.includes("Dimension:")) return false;
-    if (t.includes("Overall Pixels:")) return false;
-    if (t.includes("Neutral Land:")) return false;
-    if (t.includes("Land:")) return false;
-    if (t.includes("Water:")) return false;
+function replaceNames(text) {
+
+    let result = text;
+
+    for (const [real, anon] of anonMap.entries()) {
+
+        if (result.includes(real)) {
+            result = result.split(real).join(anon);
+        }
+
+        // handle truncated leaderboard names
+        if (real.length > 6) {
+            const trunc = real.slice(0, real.length-3) + "...";
+            if (result.includes(trunc)) {
+                result = result.split(trunc).join(anon);
+            }
+        }
+
+    }
+
+    return result;
+}
+
+function shouldAnon() {
+    if (endScreen) return false;
     return true;
-  }
+}
 
-  function getAnon(text) {
-    if (!anonMap.has(text)) {
-      anonMap.set(text, "Anon " + Math.floor(1000 + Math.random() * 9000));
-    }
-    return anonMap.get(text);
-  }
+const origFill = CanvasRenderingContext2D.prototype.fillText;
+const origDraw = CanvasRenderingContext2D.prototype.drawImage;
 
-  const originalFillText = CanvasRenderingContext2D.prototype.fillText;
-  const originalDrawImage = CanvasRenderingContext2D.prototype.drawImage;
+CanvasRenderingContext2D.prototype.drawImage = function(...args) {
 
-  CanvasRenderingContext2D.prototype.drawImage = function(...args) {
     try {
-      const img = args[0];
-      const defeatImg = window.ab?.aHK?.("defeat");
-      const victoryImg = window.ab?.aHK?.("victory");
 
-      if (img && (img === defeatImg || img === victoryImg)) {
-        endScreenShown = true;
-      }
+        const img = args[0];
+
+        const defeat = window.ab?.aHK?.("defeat");
+        const victory = window.ab?.aHK?.("victory");
+
+        if (img === defeat || img === victory) {
+            endScreen = true;
+        }
+
     } catch {}
-    return originalDrawImage.apply(this, args);
-  };
 
-  CanvasRenderingContext2D.prototype.fillText = function(text, x, y, maxWidth) {
+    return origDraw.apply(this,args);
+}
+
+CanvasRenderingContext2D.prototype.fillText = function(text,x,y,maxWidth){
+
     try {
-      if (typeof text === "string" && shouldAnonymise() && looksLikePlayerName(text)) {
-        text = getAnon(text);
-      }
-    } catch {}
-    return originalFillText.call(this, text, x, y, maxWidth);
-  };
 
-  console.log("[TTWC] defeat-driven anonymiser active");
+        if (!namesLoaded) generateAnonMap();
+
+        if (typeof text === "string" && shouldAnon()) {
+            text = replaceNames(text);
+        }
+
+    } catch {}
+
+    return origFill.call(this,text,x,y,maxWidth);
+}
+
+console.log("[TTWC] exact-name anonymiser active");
+
 })();
   </script>
   
