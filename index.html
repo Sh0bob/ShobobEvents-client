@@ -247,85 +247,165 @@
   <script>
 (() => {
   const GAME_KEY = "aD";
-  const GAME_STATE_KEY = "a0u";
-  const PLAYER_ID_KEY = "ep";
   const PLAYER_DATA_KEY = "ag";
+  const RAW_NAMES_KEY = "a1c";
+  const PLAYER_ID_KEY = "ep";
   const TERRITORIES_KEY = "gt";
 
   const anonMap = new Map();
+  let lastSignature = "";
+  let hasSpawnedThisMatch = false;
 
-  const UI_BLACKLIST = new Set([
-    "Humans",
-    "Bots",
-    "Spectators",
-    "Percentage",
-    "Income",
-    "Interest",
-    "Time"
-  ]);
+  function getGame() {
+    return window[GAME_KEY];
+  }
+
+  function getPlayerData() {
+    return window[PLAYER_DATA_KEY];
+  }
+
+  function getRawNames() {
+    try {
+      return getPlayerData()?.[RAW_NAMES_KEY] || [];
+    } catch {
+      return [];
+    }
+  }
+
+  function getMyId() {
+    try {
+      return getGame()?.[PLAYER_ID_KEY];
+    } catch {
+      return null;
+    }
+  }
+
+  function getTerritories() {
+    try {
+      return getPlayerData()?.[TERRITORIES_KEY] || null;
+    } catch {
+      return null;
+    }
+  }
 
   function inActiveGame() {
     try {
-      const game = window[GAME_KEY];
-      return !!game && game[GAME_STATE_KEY] !== 0;
+      const g = getGame();
+      return !!g && g.a0u !== 0;
     } catch {
       return false;
     }
   }
 
-  function isSpectating() {
+  function updateSpawnState() {
     try {
-      const game = window[GAME_KEY];
-      const data = window[PLAYER_DATA_KEY];
-      const myId = game?.[PLAYER_ID_KEY];
-      const territories = data?.[TERRITORIES_KEY];
-      if (!territories || myId == null) return false;
-      return territories[myId] === 0;
-    } catch {
-      return false;
+      const myId = getMyId();
+      const territories = getTerritories();
+      if (myId == null || !territories) return;
+
+      if (territories[myId] > 0) {
+        hasSpawnedThisMatch = true;
+      }
+    } catch {}
+  }
+
+  function shouldAnonymise() {
+    if (!inActiveGame()) return false;
+
+    updateSpawnState();
+
+    const myId = getMyId();
+    const territories = getTerritories();
+
+    if (myId == null || !territories) return false;
+
+    // Before spawning: anonymiser ON
+    if (!hasSpawnedThisMatch) return true;
+
+    // While alive: anonymiser ON
+    if (territories[myId] > 0) return true;
+
+    // After death/spectating: anonymiser OFF
+    return false;
+  }
+
+  function resetForNewMatch(names) {
+    const sig = names.join("|");
+    if (sig && sig !== lastSignature) {
+      lastSignature = sig;
+      anonMap.clear();
+      hasSpawnedThisMatch = false;
     }
   }
 
-  function isNumericLike(text) {
-    return /^[-+0-9.%: ()]+$/.test(text.trim());
+  function getAnon(realName) {
+    if (!anonMap.has(realName)) {
+      anonMap.set(realName, "Anon " + Math.floor(1000 + Math.random() * 9000));
+    }
+    return anonMap.get(realName);
   }
 
-  function looksLikePlayerName(text) {
+  function matchPlayerName(text, names) {
     const t = text.trim();
-    if (!t) return false;
-    if (UI_BLACKLIST.has(t)) return false;
-    if (isNumericLike(t)) return false;
-    if (t.length < 2) return false;
-    return true;
+
+    for (const real of names) {
+      if (!real || typeof real !== "string") continue;
+
+      // Exact match
+      if (t === real) return real;
+
+      // Truncated leaderboard style: "Western Roman Em..."
+      if (t.endsWith("...")) {
+        const base = t.slice(0, -3);
+        if (real.startsWith(base)) return real;
+      }
+
+      // Unicode ellipsis version
+      if (t.endsWith("…")) {
+        const base = t.slice(0, -1);
+        if (real.startsWith(base)) return real;
+      }
+    }
+
+    return null;
   }
 
-  function getAnon(text) {
-    if (!anonMap.has(text)) {
-      anonMap.set(text, "Anon " + Math.floor(1000 + Math.random() * 9000));
-    }
-    return anonMap.get(text);
+  function replaceName(text) {
+    const names = getRawNames();
+    if (!Array.isArray(names) || !names.length) return text;
+
+    resetForNewMatch(names);
+
+    const matched = matchPlayerName(text, names);
+    if (!matched) return text;
+
+    return getAnon(matched);
   }
 
   const originalFillText = CanvasRenderingContext2D.prototype.fillText;
+  const originalStrokeText = CanvasRenderingContext2D.prototype.strokeText;
 
   CanvasRenderingContext2D.prototype.fillText = function(text, x, y, maxWidth) {
     try {
-      if (
-        typeof text === "string" &&
-        inActiveGame() &&
-        !isSpectating() &&
-        looksLikePlayerName(text)
-      ) {
-        text = getAnon(text);
+      if (typeof text === "string" && shouldAnonymise()) {
+        text = replaceName(text);
       }
-    } catch (e) {}
-
+    } catch {}
     return originalFillText.call(this, text, x, y, maxWidth);
   };
 
-  console.log("[TTWC] heuristic name randomiser active");
+  CanvasRenderingContext2D.prototype.strokeText = function(text, x, y, maxWidth) {
+    try {
+      if (typeof text === "string" && shouldAnonymise()) {
+        text = replaceName(text);
+      }
+    } catch {}
+    return originalStrokeText.call(this, text, x, y, maxWidth);
+  };
+
+  console.log("[TTWC] improved name randomiser active");
 })();
-</script>
+  </script>
   
   <script>
 (() => {
