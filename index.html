@@ -395,8 +395,7 @@
 </script>
 <script>
 (() => {
-  // These keys come from the current FX bundle build.
-  // If FX updates later, these may need adjusting.
+  // Current keys from this FX/custom-lobbies build
   const GAME_KEY = "aD";
   const PLAYER_DATA_KEY = "ag";
   const RAW_NAMES_KEY = "a1c";
@@ -408,7 +407,7 @@
   let originalRawNames = null;
   let originalPlayerNames = null;
   let anonMap = {};
-  let lastMatchSignature = "";
+  let lastSignature = "";
 
   function getGame() {
     return window[GAME_KEY];
@@ -416,6 +415,14 @@
 
   function getPlayerData() {
     return window[PLAYER_DATA_KEY];
+  }
+
+  function getRawNames() {
+    return getPlayerData()?.[RAW_NAMES_KEY] || null;
+  }
+
+  function getPlayerNames() {
+    return window[PLAYER_NAMES_KEY] || null;
   }
 
   function inActiveGame() {
@@ -438,38 +445,20 @@
 
       if (myId == null || !territories) return false;
 
-      // Best practical check:
-      // once your territories are 0, reveal real names again.
       return territories[myId] === 0;
     } catch {
       return false;
     }
   }
 
-  function getRawNames() {
-    try {
-      return getPlayerData()?.[RAW_NAMES_KEY];
-    } catch {
-      return null;
+  function makeAnonName(i) {
+    if (!anonMap[i]) {
+      anonMap[i] = "Anon " + Math.floor(1000 + Math.random() * 9000);
     }
+    return anonMap[i];
   }
 
-  function getPlayerNames() {
-    try {
-      return getGame()?.[PLAYER_NAMES_KEY];
-    } catch {
-      return null;
-    }
-  }
-
-  function makeAnonName(index) {
-    if (!anonMap[index]) {
-      anonMap[index] = "Anon " + Math.floor(1000 + Math.random() * 9000);
-    }
-    return anonMap[index];
-  }
-
-  function buildMatchSignature(names) {
+  function matchSignature(names) {
     try {
       return names.join("|");
     } catch {
@@ -477,11 +466,13 @@
     }
   }
 
-  function resetAnonMapIfNewMatch(names) {
-    const sig = buildMatchSignature(names);
-    if (sig && sig !== lastMatchSignature) {
-      lastMatchSignature = sig;
+  function resetForNewMatch(names) {
+    const sig = matchSignature(names);
+    if (sig && sig !== lastSignature) {
+      lastSignature = sig;
       anonMap = {};
+      originalRawNames = null;
+      originalPlayerNames = null;
     }
   }
 
@@ -515,13 +506,13 @@
     }
   }
 
-  function applyAnonNames() {
+  function applyAnon() {
     const raw = getRawNames();
     const names = getPlayerNames();
 
     if (!Array.isArray(raw)) return;
 
-    resetAnonMapIfNewMatch(raw);
+    resetForNewMatch(raw);
     storeOriginals();
 
     for (let i = 0; i < raw.length; i++) {
@@ -534,17 +525,18 @@
   function tick() {
     try {
       if (inActiveGame() && !isSpectating()) {
-        applyAnonNames();
+        applyAnon();
       } else {
         restoreOriginals();
       }
     } catch (e) {
-      // keep silent so we don't break the client
+      console.log("[TTWC anon error]", e);
     }
 
     requestAnimationFrame(tick);
   }
 
+  console.log("[TTWC] name randomiser active");
   requestAnimationFrame(tick);
 })();
 </script>
