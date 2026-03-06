@@ -11,7 +11,7 @@
             "sizes": "64x64"
         },
         {
-            "src": "assets/logo.png",
+            "src": "FX Client_files/logo.png",
             "sizes": "any",
             "type": "image/png"
         }
