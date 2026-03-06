@@ -128,6 +128,118 @@
       <button onclick="document.getElementById('updateNotification').style.display = 'none'">Dismiss</button>
     </div>
   </span>
+  <script>
+(() => {
+  const LOGO_SRC = "./assets/ttwc-logo.png";
+
+  // Create logo element once
+  const logo = document.createElement("img");
+  logo.src = LOGO_SRC;
+  logo.alt = "TTWC Logo";
+  logo.id = "ttwc-logo";
+
+  // Style (adjust size/position later if you want)
+  Object.assign(logo.style, {
+    position: "absolute",
+    left: "50%",
+    top: "165px",            // move up/down
+    transform: "translateX(-50%)",
+    width: "220px",          // make bigger/smaller
+    height: "auto",
+    zIndex: "9999",
+    pointerEvents: "none",
+    display: "none"          // only show on main menu
+  });
+
+  document.body.appendChild(logo);
+
+  function isMainMenu() {
+    // Best-effort: when the name input ("Your Kingdom's Name") exists, we're in the main menu
+    const nameInput = document.querySelector('input[placeholder*="Kingdom"]');
+    return !!nameInput;
+  }
+
+  function tick() {
+    logo.style.display = isMainMenu() ? "block" : "none";
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+<script>
+(() => {
+  function findBtn(label) {
+    return Array.from(document.querySelectorAll("button"))
+      .find(b => (b.innerText || "").trim().includes(label));
+  }
+
+  // Stores target positions once we capture them
+  const targets = {
+    lobby: null,    // Join/Create should go here (Multiplayer slot)
+    settings: null  // FX settings should go here (Custom Scenario slot)
+  };
+
+  function captureBox(btn) {
+    const rect = btn.getBoundingClientRect();
+
+    // Prefer inline style values if present (common in Territorial UI)
+    const left = btn.style.left || (rect.left + "px");
+    const top = btn.style.top || (rect.top + "px");
+    const width = btn.style.width || (rect.width + "px");
+    const height = btn.style.height || (rect.height + "px");
+    const font = btn.style.font || getComputedStyle(btn).font;
+    const border = btn.style.border || getComputedStyle(btn).border;
+    const bg = btn.style.backgroundColor || getComputedStyle(btn).backgroundColor;
+
+    return { left, top, width, height, font, border, bg };
+  }
+
+  function applyBox(to, box) {
+    if (!to || !box) return;
+
+    // Use !important so we always win
+    to.style.setProperty("position", "absolute", "important");
+    to.style.setProperty("left", box.left, "important");
+    to.style.setProperty("top", box.top, "important");
+    to.style.setProperty("width", box.width, "important");
+    to.style.setProperty("height", box.height, "important");
+    to.style.setProperty("font", box.font, "important");
+    to.style.setProperty("border", box.border, "important");
+    to.style.setProperty("background-color", box.bg, "important");
+  }
+
+  function isMenu() {
+    // Same best-effort check as logo: menu exists if the kingdom-name input exists
+    return !!document.querySelector('input[placeholder*="Kingdom"]');
+  }
+
+  function tick() {
+    if (isMenu()) {
+      const multiplayer = findBtn("Multiplayer");
+      const scenario = findBtn("Custom Scenario");
+      const lobby = findBtn("Join/Create custom lobby");
+      const settings = findBtn("FX Client settings");
+
+      // Capture big button boxes once
+      if (!targets.lobby && multiplayer) targets.lobby = captureBox(multiplayer);
+      if (!targets.settings && scenario) targets.settings = captureBox(scenario);
+
+      // Remove unwanted buttons whenever they exist
+      if (multiplayer) multiplayer.remove();
+      if (scenario) scenario.remove();
+
+      // Move & lock the two remaining buttons into the captured slots
+      applyBox(lobby, targets.lobby);
+      applyBox(settings, targets.settings);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  console.log("[TTWC] menu button swap active");
+  requestAnimationFrame(tick);
+})();
+  </script>
   <script src="./FX Client_files/variables.js"></script>
   <script src="./FX Client_files/fx.bundle.js"></script>
   <script src="./FX Client_files/game.js"></script>
