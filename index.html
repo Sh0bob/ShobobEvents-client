@@ -328,26 +328,7 @@
   }
 
   function shouldAnonymise() {
-    if (!inActiveGame()) {
-      hasSpawnedThisMatch = false;
-      return false;
-    }
-
-    updateSpawnState();
-
-    const myId = getMyId();
-    const territories = getTerritories();
-
-    if (myId == null || !territories) return false;
-
-    // Before you spawn: anonymise ON
-    if (!hasSpawnedThisMatch) return true;
-
-    // While alive: anonymise ON
-    if (territories[myId] > 0) return true;
-
-    // After death / spectator: anonymise OFF
-    return false;
+    return true;
   }
 
   function isNumericLike(text) {
