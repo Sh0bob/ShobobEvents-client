@@ -242,6 +242,27 @@
   </script>
   <script src="./FX Client_files/variables.js"></script>
   <script src="./FX Client_files/fx.bundle.js"></script>
+  <script>
+(() => {
+  const originalDrawImage = CanvasRenderingContext2D.prototype.drawImage;
+
+  CanvasRenderingContext2D.prototype.drawImage = function(...args) {
+    try {
+      const img = args[0];
+      const src = img?.src || img?.currentSrc || "";
+
+      // Only log actual image draws
+      if (src) {
+        console.log("[TTWC drawImage]", src);
+      }
+    } catch {}
+
+    return originalDrawImage.apply(this, args);
+  };
+
+  console.log("[TTWC] drawImage logger installed");
+})();
+</script>
   <script src="./FX Client_files/game.js"></script>
 
   <script>
