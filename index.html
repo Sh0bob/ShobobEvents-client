@@ -242,114 +242,39 @@
   </script>
   <script src="./FX Client_files/variables.js"></script>
   <script src="./FX Client_files/fx.bundle.js"></script>
-  <script>
-(() => {
-  const originalDrawImage = CanvasRenderingContext2D.prototype.drawImage;
-
-  CanvasRenderingContext2D.prototype.drawImage = function(...args) {
-    try {
-      const img = args[0];
-      const src = img?.src || img?.currentSrc || "";
-
-      // Only log actual image draws
-      if (src) {
-        console.log("[TTWC drawImage]", src);
-      }
-    } catch {}
-
-    return originalDrawImage.apply(this, args);
-  };
-
-  console.log("[TTWC] drawImage logger installed");
-})();
-</script>
   <script src="./FX Client_files/game.js"></script>
 
   <script>
 (() => {
   const GAME_KEY = "aD";
-  const PLAYER_DATA_KEY = "ag";
-  const PLAYER_ID_KEY = "ep";
-  const TERRITORIES_KEY = "gt";
   const GAME_STATE_KEY = "a0u";
 
   const anonMap = new Map();
-  let hasSpawnedThisMatch = false;
+  let endScreenShown = false;
 
   const UI_BLACKLIST = new Set([
-    "LEADERBOARD",
-    "Leaderboard",
-    "Humans",
-    "Bots",
-    "Spectators",
-    "Percentage",
-    "Income",
-    "Interest",
-    "Time",
-    "Density",
-    "Max Troops",
-    "ALL",
-    "CLAN",
-    "All",
-    "Clan",
-    "More",
-    "Quit Game",
-    "Choose your start position!",
-    "Map: Europe",
-    "Dimension:",
-    "Overall Pixels:",
-    "Land:",
-    "Water:",
-    "Neutral Land:"
+    "LEADERBOARD","Leaderboard","Humans","Bots","Spectators",
+    "Percentage","Income","Interest","Time","Density","Max Troops",
+    "ALL","CLAN","All","Clan","More","Quit Game",
+    "Choose your start position!","Map: Europe"
   ]);
-
-  function getGame() {
-    return window[GAME_KEY];
-  }
-
-  function getPlayerData() {
-    return window[PLAYER_DATA_KEY];
-  }
 
   function inActiveGame() {
     try {
-      const game = getGame();
-      return !!game && game[GAME_STATE_KEY] !== 0;
+      const g = window[GAME_KEY];
+      return !!g && g[GAME_STATE_KEY] !== 0;
     } catch {
       return false;
     }
   }
 
-  function getMyId() {
-    try {
-      return getGame()?.[PLAYER_ID_KEY];
-    } catch {
-      return null;
-    }
-  }
-
-  function getTerritories() {
-    try {
-      return getPlayerData()?.[TERRITORIES_KEY] || null;
-    } catch {
-      return null;
-    }
-  }
-
-  function updateSpawnState() {
-    try {
-      const myId = getMyId();
-      const territories = getTerritories();
-      if (myId == null || !territories) return;
-
-      if (territories[myId] > 0) {
-        hasSpawnedThisMatch = true;
-      }
-    } catch {}
-  }
-
   function shouldAnonymise() {
-    return true;
+    if (!inActiveGame()) {
+      endScreenShown = false;
+      anonMap.clear();
+      return false;
+    }
+    return !endScreenShown;
   }
 
   function isNumericLike(text) {
@@ -362,13 +287,12 @@
     if (UI_BLACKLIST.has(t)) return false;
     if (isNumericLike(t)) return false;
     if (t.length < 2) return false;
-
-    // Exclude obvious stat labels / map info blocks
     if (t.includes("Map:")) return false;
     if (t.includes("Dimension:")) return false;
     if (t.includes("Overall Pixels:")) return false;
     if (t.includes("Neutral Land:")) return false;
-
+    if (t.includes("Land:")) return false;
+    if (t.includes("Water:")) return false;
     return true;
   }
 
@@ -380,22 +304,31 @@
   }
 
   const originalFillText = CanvasRenderingContext2D.prototype.fillText;
+  const originalDrawImage = CanvasRenderingContext2D.prototype.drawImage;
+
+  CanvasRenderingContext2D.prototype.drawImage = function(...args) {
+    try {
+      const img = args[0];
+      const defeatImg = window.ab?.aHK?.("defeat");
+      const victoryImg = window.ab?.aHK?.("victory");
+
+      if (img && (img === defeatImg || img === victoryImg)) {
+        endScreenShown = true;
+      }
+    } catch {}
+    return originalDrawImage.apply(this, args);
+  };
 
   CanvasRenderingContext2D.prototype.fillText = function(text, x, y, maxWidth) {
     try {
-      if (
-        typeof text === "string" &&
-        shouldAnonymise() &&
-        looksLikePlayerName(text)
-      ) {
+      if (typeof text === "string" && shouldAnonymise() && looksLikePlayerName(text)) {
         text = getAnon(text);
       }
     } catch {}
-
     return originalFillText.call(this, text, x, y, maxWidth);
   };
 
-  console.log("[TTWC] heuristic anonymiser v2 active");
+  console.log("[TTWC] defeat-driven anonymiser active");
 })();
   </script>
   
