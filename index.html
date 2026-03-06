@@ -248,13 +248,39 @@
 (() => {
   const GAME_KEY = "aD";
   const PLAYER_DATA_KEY = "ag";
-  const RAW_NAMES_KEY = "a1c";
   const PLAYER_ID_KEY = "ep";
   const TERRITORIES_KEY = "gt";
+  const GAME_STATE_KEY = "a0u";
 
   const anonMap = new Map();
-  let lastSignature = "";
   let hasSpawnedThisMatch = false;
+
+  const UI_BLACKLIST = new Set([
+    "LEADERBOARD",
+    "Leaderboard",
+    "Humans",
+    "Bots",
+    "Spectators",
+    "Percentage",
+    "Income",
+    "Interest",
+    "Time",
+    "Density",
+    "Max Troops",
+    "ALL",
+    "CLAN",
+    "All",
+    "Clan",
+    "More",
+    "Quit Game",
+    "Choose your start position!",
+    "Map: Europe",
+    "Dimension:",
+    "Overall Pixels:",
+    "Land:",
+    "Water:",
+    "Neutral Land:"
+  ]);
 
   function getGame() {
     return window[GAME_KEY];
@@ -264,11 +290,12 @@
     return window[PLAYER_DATA_KEY];
   }
 
-  function getRawNames() {
+  function inActiveGame() {
     try {
-      return getPlayerData()?.[RAW_NAMES_KEY] || [];
+      const game = getGame();
+      return !!game && game[GAME_STATE_KEY] !== 0;
     } catch {
-      return [];
+      return false;
     }
   }
 
@@ -288,15 +315,6 @@
     }
   }
 
-  function inActiveGame() {
-    try {
-      const g = getGame();
-      return !!g && g.a0u !== 0;
-    } catch {
-      return false;
-    }
-  }
-
   function updateSpawnState() {
     try {
       const myId = getMyId();
@@ -310,7 +328,10 @@
   }
 
   function shouldAnonymise() {
-    if (!inActiveGame()) return false;
+    if (!inActiveGame()) {
+      hasSpawnedThisMatch = false;
+      return false;
+    }
 
     updateSpawnState();
 
@@ -319,91 +340,60 @@
 
     if (myId == null || !territories) return false;
 
-    // Before spawning: anonymiser ON
+    // Before you spawn: anonymise ON
     if (!hasSpawnedThisMatch) return true;
 
-    // While alive: anonymiser ON
+    // While alive: anonymise ON
     if (territories[myId] > 0) return true;
 
-    // After death/spectating: anonymiser OFF
+    // After death / spectator: anonymise OFF
     return false;
   }
 
-  function resetForNewMatch(names) {
-    const sig = names.join("|");
-    if (sig && sig !== lastSignature) {
-      lastSignature = sig;
-      anonMap.clear();
-      hasSpawnedThisMatch = false;
-    }
+  function isNumericLike(text) {
+    return /^[-+0-9.%: ()]+$/.test(text.trim());
   }
 
-  function getAnon(realName) {
-    if (!anonMap.has(realName)) {
-      anonMap.set(realName, "Anon " + Math.floor(1000 + Math.random() * 9000));
-    }
-    return anonMap.get(realName);
-  }
-
-  function matchPlayerName(text, names) {
+  function looksLikePlayerName(text) {
     const t = text.trim();
+    if (!t) return false;
+    if (UI_BLACKLIST.has(t)) return false;
+    if (isNumericLike(t)) return false;
+    if (t.length < 2) return false;
 
-    for (const real of names) {
-      if (!real || typeof real !== "string") continue;
+    // Exclude obvious stat labels / map info blocks
+    if (t.includes("Map:")) return false;
+    if (t.includes("Dimension:")) return false;
+    if (t.includes("Overall Pixels:")) return false;
+    if (t.includes("Neutral Land:")) return false;
 
-      // Exact match
-      if (t === real) return real;
-
-      // Truncated leaderboard style: "Western Roman Em..."
-      if (t.endsWith("...")) {
-        const base = t.slice(0, -3);
-        if (real.startsWith(base)) return real;
-      }
-
-      // Unicode ellipsis version
-      if (t.endsWith("…")) {
-        const base = t.slice(0, -1);
-        if (real.startsWith(base)) return real;
-      }
-    }
-
-    return null;
+    return true;
   }
 
-  function replaceName(text) {
-    const names = getRawNames();
-    if (!Array.isArray(names) || !names.length) return text;
-
-    resetForNewMatch(names);
-
-    const matched = matchPlayerName(text, names);
-    if (!matched) return text;
-
-    return getAnon(matched);
+  function getAnon(text) {
+    if (!anonMap.has(text)) {
+      anonMap.set(text, "Anon " + Math.floor(1000 + Math.random() * 9000));
+    }
+    return anonMap.get(text);
   }
 
   const originalFillText = CanvasRenderingContext2D.prototype.fillText;
-  const originalStrokeText = CanvasRenderingContext2D.prototype.strokeText;
 
   CanvasRenderingContext2D.prototype.fillText = function(text, x, y, maxWidth) {
     try {
-      if (typeof text === "string" && shouldAnonymise()) {
-        text = replaceName(text);
+      if (
+        typeof text === "string" &&
+        shouldAnonymise() &&
+        looksLikePlayerName(text)
+      ) {
+        text = getAnon(text);
       }
     } catch {}
+
     return originalFillText.call(this, text, x, y, maxWidth);
   };
 
-  CanvasRenderingContext2D.prototype.strokeText = function(text, x, y, maxWidth) {
-    try {
-      if (typeof text === "string" && shouldAnonymise()) {
-        text = replaceName(text);
-      }
-    } catch {}
-    return originalStrokeText.call(this, text, x, y, maxWidth);
-  };
-
-  console.log("[TTWC] improved name randomiser active");
+  console.log("[TTWC] heuristic anonymiser v2 active");
 })();
   </script>
   
