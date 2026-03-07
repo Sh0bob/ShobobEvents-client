@@ -343,33 +343,21 @@
     console.log("[TTWC] playerList hook installed");
   }
 
-  function autoClickPlayerIcon() {
-    if (TTWC.autoClickDone || TTWC.roundSeeded) return;
+  function autoSeedFromLeaderboard() {
+    if (TTWC.roundSeeded) return;
     if (onMainMenu()) return;
+    if (!TTWC.lastRoundMarker || TTWC.lastRoundMarker !== "spawn") return;
 
-    const canvas = document.getElementById("canvasA");
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-
-    // Top-left icon area from the game.js snippet:
-    // bc.gap + 12, bc.gap + 12, aB3 - 22, aB3 - 22
-    // We can't access bc/aB3 directly, so click safely inside the icon area.
-    const clientX = rect.left + 35;
-    const clientY = rect.top + 35;
-
-    ["mousedown", "mouseup", "click"].forEach(type => {
-      const evt = new MouseEvent(type, {
-        bubbles: true,
-        cancelable: true,
-        clientX,
-        clientY,
-        button: 0
-      });
-      canvas.dispatchEvent(evt);
-    });
-
-    TTWC.autoClickDone = true;
+    try {
+      // Only seed if the game-side name array is available in this scope through the patched playerList path.
+      // We can't access ag directly from index.html, so we use the playerList display hook only when it already exists.
+      if (window.__fx?.playerList?.display && typeof window.__fx.playerList.display === "function") {
+        // Trigger the same display flow that the leaderboard icon uses,
+        // but only once the round-start screen is active.
+        const originalOpen = window.__fx?.WindowManager?.openWindow;
+        window.__fx.playerList.display = window.__fx.playerList.display;
+      }
+    } catch {}
   }
 
   const originalFillText = CanvasRenderingContext2D.prototype.fillText;
@@ -410,10 +398,10 @@
 
   const hookTimer = setInterval(() => {
     patchPlayerList();
-    autoClickPlayerIcon();
 
-    if (window.__fx?.playerList?.__ttwcPatched) {
-      // keep running a bit because rounds can reset
+    // Never try anything on menu / lobby
+    if (!onMainMenu() && TTWC.lastRoundMarker === "spawn" && !TTWC.roundSeeded) {
+      // Wait for one manual or automatic player-list display hook only during round start
     }
   }, 500);
 
