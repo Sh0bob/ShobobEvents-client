@@ -252,6 +252,7 @@
   TTWC.endScreenShown = false;
   TTWC.roundSeeded = false;
   TTWC.lastRoundMarker = "";
+  TTWC.autoClickDone = false;
 
   function onMainMenu() {
     const el = document.querySelector('input[placeholder*="Kingdom"]');
@@ -274,6 +275,7 @@
     TTWC.anonMap.clear();
     TTWC.endScreenShown = false;
     TTWC.roundSeeded = false;
+    TTWC.autoClickDone = false;
   }
 
   function shouldAnonymise() {
@@ -326,6 +328,11 @@
           const humanCount = parseInt(match[1], 10);
           TTWC.humanNames = names.slice(0, humanCount);
           TTWC.roundSeeded = true;
+
+          // close the list immediately so users don't see it pop up
+          try {
+            window.__fx?.WindowManager?.closeWindow?.("playerList");
+          } catch {}
         }
       } catch {}
 
@@ -336,41 +343,33 @@
     console.log("[TTWC] playerList hook installed");
   }
 
-  function maybeSeedRound() {
-    const startPrompt = Array.from(document.querySelectorAll("div,span,p,h1,h2,h3,h4"))
-      .some(el => (el.textContent || "").includes("Choose your start position!"));
+  function autoClickPlayerIcon() {
+    if (TTWC.autoClickDone || TTWC.roundSeeded) return;
+    if (onMainMenu()) return;
 
-    if (startPrompt) {
-      const marker = "spawn";
-      if (TTWC.lastRoundMarker !== marker) {
-        resetRound();
-        TTWC.lastRoundMarker = marker;
-      }
-    }
+    const canvas = document.getElementById("canvasA");
+    if (!canvas) return;
 
-    if (!TTWC.roundSeeded && window.__fx?.playerList?.display) {
-      try {
-        const names = window.__fx?.donationsTracker?.donationHistory
-          ? null
-          : null;
+    const rect = canvas.getBoundingClientRect();
 
-        const maybeNames = window.__fx && window.__fx.playerList && typeof window.__fx.playerList.display === "function"
-          ? null
-          : null;
+    // Top-left icon area from the game.js snippet:
+    // bc.gap + 12, bc.gap + 12, aB3 - 22, aB3 - 22
+    // We can't access bc/aB3 directly, so click safely inside the icon area.
+    const clientX = rect.left + 35;
+    const clientY = rect.top + 35;
 
-        const raw = window.__fx?.utils ? null : null;
-      } catch {}
-    }
+    ["mousedown", "mouseup", "click"].forEach(type => {
+      const evt = new MouseEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        clientX,
+        clientY,
+        button: 0
+      });
+      canvas.dispatchEvent(evt);
+    });
 
-    // safest auto-seed: trigger existing player list display if names are already accessible through the button workflow
-    try {
-      const iconBtn = document.querySelector("#playerlist_content") ? null : null;
-      const btns = Array.from(document.querySelectorAll("button,canvas"));
-      if (!TTWC.roundSeeded && window.__fx?.playerList?.display && typeof window.__fx.playerList.display === "function") {
-        // Try to open the player list by simulating the existing FX path through the icon button if present.
-        // If no direct path exists, user may still need one manual click in this build.
-      }
-    } catch {}
+    TTWC.autoClickDone = true;
   }
 
   const originalFillText = CanvasRenderingContext2D.prototype.fillText;
@@ -411,11 +410,14 @@
 
   const hookTimer = setInterval(() => {
     patchPlayerList();
-    maybeSeedRound();
-    if (window.__fx?.playerList?.__ttwcPatched) clearInterval(hookTimer);
-  }, 250);
+    autoClickPlayerIcon();
 
-  console.log("[TTWC] player-list anonymiser v2 active");
+    if (window.__fx?.playerList?.__ttwcPatched) {
+      // keep running a bit because rounds can reset
+    }
+  }, 500);
+
+  console.log("[TTWC] auto-seeding player-list anonymiser active");
 })();
   </script>
   
