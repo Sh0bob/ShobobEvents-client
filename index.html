@@ -547,10 +547,6 @@ window.__TTWC = window.__TTWC || {};
 window.__TTWC.peaceVoteHostOnly = true;
 window.__TTWC.isHost = false;
 
-window.__TTWC.hostCanCallPeace = function () {
-  return !!window.__TTWC.isHost;
-};
-
 (function () {
   function patchCustomLobbyHostTracking() {
     try {
@@ -587,68 +583,81 @@ window.__TTWC.hostCanCallPeace = function () {
     }
   }
 
-  function patchPeaceVoteFunctions() {
+  function patchPeaceVoteHostOnly() {
     try {
-      if (!window.bT || !window.b8 || !b8.hU || !window.aw || !window.aD || !window.b9) return false;
+      if (!window.bT || !window.b8 || !b8.hU || !window.aw || !window.aD) return false;
       if (window.__TTWC._peaceVotePatched) return true;
 
-      const originalBT_HP = bT.hp;
-      const originalHU_HP = b8.hU.hp;
+      const originalHotkeyPeace = bT.hp;
+      const originalPeaceStart = b8.hU.hp;
 
-      window.__TTWC._originalPeaceHotkeyHandler = originalBT_HP;
-      window.__TTWC._originalPeaceCallFunction = originalHU_HP;
+      window.__TTWC._originalHotkeyPeace = originalHotkeyPeace;
+      window.__TTWC._originalPeaceStart = originalPeaceStart;
 
+      function hostCanStartPeace() {
+        return !!window.__TTWC.isHost;
+      }
+
+      /*
+        Patch the hotkey path.
+        Keep normal voting behaviour if a peace vote is already active.
+        Only restrict who can START a peace vote.
+      */
       bT.hp = function () {
         try {
           if (!window.__TTWC.peaceVoteHostOnly) {
-            return originalBT_HP.apply(this, arguments);
+            return originalHotkeyPeace.apply(this, arguments);
           }
 
-          /* 
-             If a peace vote is already active, keep the normal behaviour.
-             This allows players to vote/respond normally.
-          */
+          /* If a peace vote is already active, keep normal behaviour */
           if (window.aw && aw.hq) {
-            return originalBT_HP.apply(this, arguments);
+            return originalHotkeyPeace.apply(this, arguments);
           }
 
-          /* No active peace vote: only host may start one */
-          if (!window.__TTWC.hostCanCallPeace()) {
-            console.log("TTWC: non-host peace vote blocked");
+          /* No peace vote active: only host may start one */
+          if (!hostCanStartPeace()) {
+            console.log("TTWC: non-host peace hotkey blocked");
             return;
           }
 
-          /* Host can attempt to start peace vote even if defeated */
-          return b8.hU.hp(aD.eo);
+          /*
+            For host:
+            - if alive, use the original hotkey path
+            - if defeated, call the original peace-start wrapper directly
+              so we bypass only the hotkey alive check
+          */
+          if (window.bA && bA.gQ && typeof bA.gQ.hG === "function" && bA.gQ.hG(aD.eo)) {
+            return originalHotkeyPeace.apply(this, arguments);
+          }
+
+          console.log("TTWC: defeated host attempting peace start");
+          return originalPeaceStart.apply(b8.hU, arguments);
         } catch (e) {
           console.log("TTWC bT.hp patch error:", e);
         }
       };
 
-      b8.hU.hp = function (player) {
+      /*
+        Patch the direct peace-start function too, so UI-triggered peace
+        is also host-only. But preserve the ORIGINAL internal implementation.
+      */
+      b8.hU.hp = function () {
         try {
           if (!window.__TTWC.peaceVoteHostOnly) {
-            return originalHU_HP.apply(this, arguments);
+            return originalPeaceStart.apply(this, arguments);
           }
 
-          /* Only host may start a peace vote */
-          if (!window.__TTWC.hostCanCallPeace()) {
-            console.log("TTWC: non-host direct peace call blocked");
+          /* If peace vote already active, don't interfere here */
+          if (window.aw && aw.hq) {
+            return originalPeaceStart.apply(this, arguments);
+          }
+
+          if (!hostCanStartPeace()) {
+            console.log("TTWC: non-host direct peace start blocked");
             return;
           }
 
-          /*
-            Force-send the normal peace-vote packet even if host is defeated.
-            This is the part we need to test against live server behaviour.
-          */
-          b9.qB.qC(5, player, 513);
-
-          if (window.aw && typeof aw.hp === "function") {
-            aw.hp(player);
-          }
-
-          console.log("TTWC: host peace vote sent");
-          return;
+          return originalPeaceStart.apply(this, arguments);
         } catch (e) {
           console.log("TTWC b8.hU.hp patch error:", e);
         }
@@ -665,7 +674,7 @@ window.__TTWC.hostCanCallPeace = function () {
 
   const ttwcPatchInterval = setInterval(function () {
     const ok1 = patchCustomLobbyHostTracking();
-    const ok2 = patchPeaceVoteFunctions();
+    const ok2 = patchPeaceVoteHostOnly();
 
     if (ok1 && ok2) {
       clearInterval(ttwcPatchInterval);
