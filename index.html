@@ -541,6 +541,139 @@
   setInterval(applyEmojiFilter, 100);
 })();
 </script>
+
+<script>
+window.__TTWC = window.__TTWC || {};
+window.__TTWC.peaceVoteHostOnly = true;
+window.__TTWC.isHost = false;
+
+window.__TTWC.hostCanCallPeace = function () {
+  return !!window.__TTWC.isHost;
+};
+
+(function () {
+  function patchCustomLobbyHostTracking() {
+    try {
+      if (!window.__fx || !__fx.customLobby || !__fx.customLobby.isCustomMessage) return false;
+      if (window.__TTWC._hostTrackingPatched) return true;
+
+      const originalIsCustomMessage = __fx.customLobby.isCustomMessage;
+
+      __fx.customLobby.isCustomMessage = function (packet) {
+        try {
+          if (packet && packet[0] === 120 && packet.length > 1) {
+            const bytes = new Uint8Array(packet.buffer, 1);
+            const msg = JSON.parse(new TextDecoder().decode(bytes));
+
+            if (msg && msg.t === "lobby" && msg.d) {
+              window.__TTWC.isHost = !!msg.d.isHost;
+            } else if (msg && msg.t === "host") {
+              window.__TTWC.isHost = true;
+            }
+          }
+        } catch (e) {
+          console.log("TTWC host tracking parse error:", e);
+        }
+
+        return originalIsCustomMessage.apply(this, arguments);
+      };
+
+      window.__TTWC._hostTrackingPatched = true;
+      console.log("TTWC: host tracking patched");
+      return true;
+    } catch (e) {
+      console.log("TTWC host tracking patch error:", e);
+      return false;
+    }
+  }
+
+  function patchPeaceVoteFunctions() {
+    try {
+      if (!window.bT || !window.b8 || !b8.hU || !window.aw || !window.aD || !window.b9) return false;
+      if (window.__TTWC._peaceVotePatched) return true;
+
+      const originalBT_HP = bT.hp;
+      const originalHU_HP = b8.hU.hp;
+
+      window.__TTWC._originalPeaceHotkeyHandler = originalBT_HP;
+      window.__TTWC._originalPeaceCallFunction = originalHU_HP;
+
+      bT.hp = function () {
+        try {
+          if (!window.__TTWC.peaceVoteHostOnly) {
+            return originalBT_HP.apply(this, arguments);
+          }
+
+          /* 
+             If a peace vote is already active, keep the normal behaviour.
+             This allows players to vote/respond normally.
+          */
+          if (window.aw && aw.hq) {
+            return originalBT_HP.apply(this, arguments);
+          }
+
+          /* No active peace vote: only host may start one */
+          if (!window.__TTWC.hostCanCallPeace()) {
+            console.log("TTWC: non-host peace vote blocked");
+            return;
+          }
+
+          /* Host can attempt to start peace vote even if defeated */
+          return b8.hU.hp(aD.eo);
+        } catch (e) {
+          console.log("TTWC bT.hp patch error:", e);
+        }
+      };
+
+      b8.hU.hp = function (player) {
+        try {
+          if (!window.__TTWC.peaceVoteHostOnly) {
+            return originalHU_HP.apply(this, arguments);
+          }
+
+          /* Only host may start a peace vote */
+          if (!window.__TTWC.hostCanCallPeace()) {
+            console.log("TTWC: non-host direct peace call blocked");
+            return;
+          }
+
+          /*
+            Force-send the normal peace-vote packet even if host is defeated.
+            This is the part we need to test against live server behaviour.
+          */
+          b9.qB.qC(5, player, 513);
+
+          if (window.aw && typeof aw.hp === "function") {
+            aw.hp(player);
+          }
+
+          console.log("TTWC: host peace vote sent");
+          return;
+        } catch (e) {
+          console.log("TTWC b8.hU.hp patch error:", e);
+        }
+      };
+
+      window.__TTWC._peaceVotePatched = true;
+      console.log("TTWC: peace vote host-only patch applied");
+      return true;
+    } catch (e) {
+      console.log("TTWC peace vote patch error:", e);
+      return false;
+    }
+  }
+
+  const ttwcPatchInterval = setInterval(function () {
+    const ok1 = patchCustomLobbyHostTracking();
+    const ok2 = patchPeaceVoteFunctions();
+
+    if (ok1 && ok2) {
+      clearInterval(ttwcPatchInterval);
+      console.log("TTWC: all peace vote patches loaded");
+    }
+  }, 500);
+})();
+</script>
 </body>
 
 </html>
