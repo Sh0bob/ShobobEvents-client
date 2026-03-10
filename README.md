@@ -1,1 +1,9 @@
 # ShobobEvents-client
+This client is a clone of FX Client - made specifically for competetive Territorial.io events.
+It takes the custom lobbies feature, and adds a few scripts to improve the overall competitor experience.
+The differences are as follows:
+1. A personalised and cleaner Main Menu UI - only allows custom lobbies, removes all unnecessary clutter.
+2. removed FX Client's propaganda hider toggle - this means event organisers can use this client without going against the wishes of the Creator of Territorial.io (who doesnt tolerate such toggles)
+3. Anonymous names in-game - Player's names are anonymised until they become spectators, or until they win the match.
+4. Remove emoji toggle - in the create-lobby tab, hosts can disable emojis to reduce chances of collaboration between players in matches.
+5. Host-initiated peace - Only the host can call a vote for peace. 
