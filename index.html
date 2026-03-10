@@ -585,69 +585,85 @@ window.__TTWC.isHost = false;
 
   function patchPeaceVoteHostOnly() {
     try {
-      if (!window.bT || !window.b8 || !b8.hU || !window.aw || !window.aD) return false;
+      if (!window.bT || !window.b8 || !b8.hU || !b8.pG || !window.aw || !window.aD || !window.bA || !bA.gQ) return false;
       if (window.__TTWC._peaceVotePatched) return true;
 
       const originalHotkeyPeace = bT.hp;
       const originalPeaceStart = b8.hU.hp;
+      const originalDirectPeaceStart = b8.pG.hp;
+      const originalAwHt = aw.ht;
+      const originalHG = bA.gQ.hG;
 
       window.__TTWC._originalHotkeyPeace = originalHotkeyPeace;
       window.__TTWC._originalPeaceStart = originalPeaceStart;
+      window.__TTWC._originalDirectPeaceStart = originalDirectPeaceStart;
 
       function hostCanStartPeace() {
         return !!window.__TTWC.isHost;
       }
 
-      /*
-        Patch the hotkey path.
-        Keep normal voting behaviour if a peace vote is already active.
-        Only restrict who can START a peace vote.
-      */
+      function isLocalPlayerAlive() {
+        try {
+          return !!(window.bA && bA.gQ && typeof bA.gQ.hG === "function" && bA.gQ.hG(aD.eo));
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function runDeadHostPeaceStart() {
+        const savedAwHt = aw.ht;
+        const savedHG = bA.gQ.hG;
+
+        try {
+          aw.ht = function (player) {
+            if (player === aD.eo && hostCanStartPeace()) return true;
+            return originalAwHt.apply(this, arguments);
+          };
+
+          bA.gQ.hG = function (player) {
+            if (player === aD.eo && hostCanStartPeace()) return true;
+            return originalHG.apply(this, arguments);
+          };
+
+          console.log("TTWC: attempting dead-host peace start through original path");
+          return originalPeaceStart.apply(b8.hU, arguments);
+        } finally {
+          aw.ht = savedAwHt;
+          bA.gQ.hG = savedHG;
+        }
+      }
+
       bT.hp = function () {
         try {
           if (!window.__TTWC.peaceVoteHostOnly) {
             return originalHotkeyPeace.apply(this, arguments);
           }
 
-          /* If a peace vote is already active, keep normal behaviour */
           if (window.aw && aw.hq) {
             return originalHotkeyPeace.apply(this, arguments);
           }
 
-          /* No peace vote active: only host may start one */
           if (!hostCanStartPeace()) {
             console.log("TTWC: non-host peace hotkey blocked");
             return;
           }
 
-          /*
-            For host:
-            - if alive, use the original hotkey path
-            - if defeated, call the original peace-start wrapper directly
-              so we bypass only the hotkey alive check
-          */
-          if (window.bA && bA.gQ && typeof bA.gQ.hG === "function" && bA.gQ.hG(aD.eo)) {
+          if (isLocalPlayerAlive()) {
             return originalHotkeyPeace.apply(this, arguments);
           }
 
-          console.log("TTWC: defeated host attempting peace start");
-          return originalPeaceStart.apply(b8.hU, arguments);
+          return runDeadHostPeaceStart();
         } catch (e) {
           console.log("TTWC bT.hp patch error:", e);
         }
       };
 
-      /*
-        Patch the direct peace-start function too, so UI-triggered peace
-        is also host-only. But preserve the ORIGINAL internal implementation.
-      */
       b8.hU.hp = function () {
         try {
           if (!window.__TTWC.peaceVoteHostOnly) {
             return originalPeaceStart.apply(this, arguments);
           }
 
-          /* If peace vote already active, don't interfere here */
           if (window.aw && aw.hq) {
             return originalPeaceStart.apply(this, arguments);
           }
@@ -657,9 +673,57 @@ window.__TTWC.isHost = false;
             return;
           }
 
-          return originalPeaceStart.apply(this, arguments);
+          if (isLocalPlayerAlive()) {
+            return originalPeaceStart.apply(this, arguments);
+          }
+
+          return runDeadHostPeaceStart();
         } catch (e) {
           console.log("TTWC b8.hU.hp patch error:", e);
+        }
+      };
+
+      b8.pG.hp = function (player) {
+        try {
+          if (!window.__TTWC.peaceVoteHostOnly) {
+            return originalDirectPeaceStart.apply(this, arguments);
+          }
+
+          if (window.aw && aw.hq) {
+            return originalDirectPeaceStart.apply(this, arguments);
+          }
+
+          if (!hostCanStartPeace()) {
+            console.log("TTWC: non-host direct gameplay peace blocked");
+            return;
+          }
+
+          if (player === aD.eo && !isLocalPlayerAlive()) {
+            const savedAwHt = aw.ht;
+            const savedHG = bA.gQ.hG;
+
+            try {
+              aw.ht = function (p) {
+                if (p === aD.eo && hostCanStartPeace()) return true;
+                return originalAwHt.apply(this, arguments);
+              };
+
+              bA.gQ.hG = function (p) {
+                if (p === aD.eo && hostCanStartPeace()) return true;
+                return originalHG.apply(this, arguments);
+              };
+
+              console.log("TTWC: attempting dead-host direct gameplay peace start");
+              return originalDirectPeaceStart.apply(this, arguments);
+            } finally {
+              aw.ht = savedAwHt;
+              bA.gQ.hG = savedHG;
+            }
+          }
+
+          return originalDirectPeaceStart.apply(this, arguments);
+        } catch (e) {
+          console.log("TTWC b8.pG.hp patch error:", e);
         }
       };
 
