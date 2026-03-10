@@ -594,7 +594,6 @@ window.__TTWC.isHost = false;
 
       const originalHotkeyPeace = bT.hp;
       const originalDirectPeace = b8.hU.hp;
-      const originalAliveCheck = bA.gQ.hG;
       const originalPeaceEligibility = aw.ht;
 
       function peaceVoteActive() {
@@ -605,76 +604,79 @@ window.__TTWC.isHost = false;
         }
       }
 
-      function withHostPeaceBypass(fn, ctx, args) {
-        const oldAliveCheck = bA.gQ.hG;
-        const oldPeaceEligibility = aw.ht;
-
+      /*
+        Make the peace-specific eligibility check always pass
+        for the LOCAL HOST only.
+        This should make the peace button clickable even while dead,
+        because the peace UI uses aw.ht(aD.eo) for availability.
+      */
+      aw.ht = function (player) {
         try {
-          bA.gQ.hG = function (player) {
-            if (window.__TTWC.isHost && player === aD.eo) return true;
-            return originalAliveCheck.apply(this, arguments);
-          };
+          if (window.__TTWC.isHost && player === aD.eo) {
+            return true;
+          }
+        } catch (e) {}
+        return originalPeaceEligibility.apply(this, arguments);
+      };
 
-          aw.ht = function (player) {
-            if (window.__TTWC.isHost && player === aD.eo) return true;
-            return originalPeaceEligibility.apply(this, arguments);
-          };
-
-          return fn.apply(ctx, args || []);
-        } finally {
-          bA.gQ.hG = oldAliveCheck;
-          aw.ht = oldPeaceEligibility;
-        }
-      }
-
+      /*
+        Hotkey path:
+        - if peace vote already active, keep original behaviour so players can vote yes/no
+        - if no active peace vote, only host can start it
+        - for host, bypass the original hotkey dead-player gate by calling the direct peace path
+      */
       bT.hp = function () {
         try {
           if (!window.__TTWC.peaceVoteHostOnly) {
             return originalHotkeyPeace.apply(this, arguments);
           }
 
-          /* Keep normal yes/no voting behaviour when a peace vote already exists */
           if (peaceVoteActive()) {
             return originalHotkeyPeace.apply(this, arguments);
           }
 
-          /* No active peace vote: only host may start one */
           if (!window.__TTWC.isHost) {
             console.log("TTWC: non-host peace hotkey blocked");
             return;
           }
 
-          /* Host can start peace even when dead by temporarily bypassing checks */
-          return withHostPeaceBypass(originalHotkeyPeace, this, arguments);
+          console.log("TTWC: host peace hotkey allowed");
+          return originalDirectPeace.apply(b8.hU, arguments);
         } catch (e) {
           console.log("TTWC bT.hp patch error:", e);
         }
       };
 
+      /*
+        Direct peace-start path:
+        - block non-hosts from starting peace
+        - allow host to use original peace-start logic
+      */
       b8.hU.hp = function () {
         try {
           if (!window.__TTWC.peaceVoteHostOnly) {
             return originalDirectPeace.apply(this, arguments);
           }
 
-          /* If a peace vote is already active, do not interfere */
           if (peaceVoteActive()) {
             return originalDirectPeace.apply(this, arguments);
           }
 
-          /* Block direct UI peace starts for non-hosts */
           if (!window.__TTWC.isHost) {
             console.log("TTWC: non-host direct peace start blocked");
             return;
           }
 
-          /* Host UI path also gets the temporary bypass */
-          return withHostPeaceBypass(originalDirectPeace, this, arguments);
+          console.log("TTWC: host direct peace start allowed");
+          return originalDirectPeace.apply(this, arguments);
         } catch (e) {
           console.log("TTWC b8.hU.hp patch error:", e);
         }
       };
 
+      /*
+        Block non-host UI peace clicks before a peace vote exists.
+      */
       document.addEventListener(
         "click",
         function (e) {
@@ -700,6 +702,9 @@ window.__TTWC.isHost = false;
         true
       );
 
+      /*
+        Hide peace button for non-hosts when no peace vote is active.
+      */
       const hidePeaceButtons = function () {
         try {
           if (window.__TTWC.isHost) return;
@@ -722,7 +727,7 @@ window.__TTWC.isHost = false;
       setInterval(hidePeaceButtons, 1000);
 
       window.__TTWC._peacePatched = true;
-      console.log("TTWC: host-only peace start patch loaded");
+      console.log("TTWC: host-only peace patch loaded");
       return true;
     } catch (e) {
       console.log("TTWC patchPeaceControl error:", e);
