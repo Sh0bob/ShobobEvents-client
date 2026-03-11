@@ -605,6 +605,55 @@ window.__TTWC = window.__TTWC || {};
 })();
 </script>
 
+<script>
+window.__TTWC = window.__TTWC || {};
+window.__TTWC.isHost = false;
+
+(function () {
+  function patchHostTracking() {
+    try {
+      if (!window.__fx || !__fx.customLobby || !__fx.customLobby.isCustomMessage) return false;
+      if (window.__TTWC._hostTrackingPatched) return true;
+
+      const originalIsCustomMessage = __fx.customLobby.isCustomMessage;
+
+      __fx.customLobby.isCustomMessage = function (packet) {
+        const result = originalIsCustomMessage.apply(this, arguments);
+
+        try {
+          if (packet && packet[0] === 120 && packet.length > 1) {
+            const bytes = new Uint8Array(packet.buffer, 1);
+            const msg = JSON.parse(new TextDecoder().decode(bytes));
+
+            if (msg && msg.t === "lobby" && msg.d) {
+              window.__TTWC.isHost = !!msg.d.isHost;
+            } else if (msg && msg.t === "host") {
+              window.__TTWC.isHost = true;
+            }
+          }
+        } catch (e) {
+          console.log("TTWC host tracking parse error:", e);
+        }
+
+        return result;
+      };
+
+      window.__TTWC._hostTrackingPatched = true;
+      console.log("TTWC: host tracking only installed");
+      return true;
+    } catch (e) {
+      console.log("TTWC host tracking patch error:", e);
+      return false;
+    }
+  }
+
+  const interval = setInterval(function () {
+    if (patchHostTracking()) {
+      clearInterval(interval);
+    }
+  }, 500);
+})();
+</script>
 </body>
 
 </html>
