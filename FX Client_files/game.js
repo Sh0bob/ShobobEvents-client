@@ -384,7 +384,7 @@ function dC() {
 			}
 		}
 	}, this.hp = function() {
-		if (!aD.hD && !aM.hE && bA.gQ.hF(1) && (bA.gQ.hG(aD.eo) || window.__TTWC && window.__TTWC.isHost)) return aw.hq ? aw.hr(aD.eo) ? void b8.hU.hs(1) : void 0 : void((aw.ht(aD.eo) || window.__TTWC && window.__TTWC.isHost) && b8.hU.hp())
+		if (!aD.hD && !aM.hE && bA.gQ.hG(aD.eo) && bA.gQ.hF(1)) return aw.hq ? aw.hr(aD.eo) ? void b8.hU.hs(1) : void 0 : void(aw.ht(aD.eo) && b8.hU.hp())
 	}
 }
 
@@ -1127,7 +1127,7 @@ function pE() {
 	}, this.pf = function() {
 		aD.kj ? b8.pG.pf(aD.eo) : b0.pL.pg()
 	}, this.hp = function() {
-		aD.kj || window.__TTWC && window.__TTWC.isHost ? b8.pG.hp(aD.eo) : b0.pL.pY(513)
+		aD.kj ? b8.pG.hp(aD.eo) : b0.pL.pY(513)
 	}, this.hX = function(ig, eq, jY) {
 		aD.kj ? b8.pG.hX(aD.eo, ig, eq, jY) : b0.pL.ph(ig, eq, jY)
 	}
@@ -1196,7 +1196,7 @@ function pH() {
 	}, this.qA = function(player) {
 		b9.qB.qC(9, player), bQ.qA(player)
 	}, this.hp = function(player) {
-		(aw.ht(player) || window.__TTWC && window.__TTWC.isHost && player === aD.eo) && (b9.qB.qC(5, player, 513), aw.hp(player))
+		aw.ht(player) && (b9.qB.qC(5, player, 513), aw.hp(player))
 	}, this.hX = function(player, ig, eq, jY) {
 		bA.gQ.hF(1) && bA.gQ.hG(player) && bA.gQ.qE(player, jY) && bA.gQ.qF(player, jY) && bM.il(eq) && am.ef.ey(player, eq) && (ad.jk(player, bO.f0[0]) || ad.k3(player)) && (b9.qB.qC(10, player, (ig << 10) + bO.f0[0], eq), jY = bA.gQ.lb(player,
 			ig), ag.gW[player].push(bO.f5[0]), ad.eb(player, jY, bO.f0[0]), aF.jW(player, !0), bd.qT(player))
