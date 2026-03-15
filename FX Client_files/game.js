@@ -1127,7 +1127,7 @@ function pE() {
 	}, this.pf = function() {
 		aD.kj ? b8.pG.pf(aD.eo) : b0.pL.pg()
 	}, this.hp = function() {
-		aD.kj || window.__TTWC && window.__TTWC.isHost ? b8.pG.hp(aD.eo) : b0.pL.pY(513)
+		aD.kj ? b8.pG.hp(aD.eo) : b0.pL.pY(513)
 	}, this.hX = function(ig, eq, jY) {
 		aD.kj ? b8.pG.hX(aD.eo, ig, eq, jY) : b0.pL.ph(ig, eq, jY)
 	}
