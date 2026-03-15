@@ -4294,14 +4294,15 @@ function cq() {
 		var fD;
 		this.hq && (fD = z2(), vV.drawImage(canvas, h.i - this.i - bc.gap, fD))
 	}, this.ht = function(player) {
-		if (0 !== a8u) return !1;
-		if (!bA.gQ.hF(1)) return !1;
-		if (!bA.gQ.hG(player)) return !1;
-		if (10 <= kA[player] && !bA.gQ.a4c(player, 9)) return !1;
-		if (!aD.kj) {
-			player = bf.kM();
-			if (player < a8w + 100) return !!void 0;
-			if (player < 1607) return !!void 0
+		if (window.__TTWC && window.__TTWC.isHost && player === aD.eo) return !0;
+	    if (0 !== a8u) return !1;
+	    if (!bA.gQ.hF(1)) return !1;
+	    if (!bA.gQ.hG(player)) return !1;
+	    if (10 <= kA[player] && !bA.gQ.a4c(player, 9)) return !1;
+	    if (!aD.kj) {
+	    	player = bf.kM();
+		    if (player < a8w + 100) return !!void 0;
+		    if (player < 1607) return !!void 0
 		}
 		return !!1
 	}, this.hr = function(gc) {
