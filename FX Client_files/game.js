@@ -384,7 +384,7 @@ function dC() {
 			}
 		}
 			}, this.hp = function() {
-		        if (!aD.hD && !aM.hE && bA.gQ.hF(1) && (bA.gQ.hG(aD.eo) || window.__TTWC && window.__TTWC.isHost)) return aw.hq ? aw.hr(aD.eo) ? void b8.hU.hs(1) : void 0 : void(aw.ht(aD.eo) && b8.hU.hp())
+		        if (!aD.hD && !aM.hE && bA.gQ.hF(1) && window.__TTWC && window.__TTWC.isHost) return aw.hq ? aw.hr(aD.eo) ? void b8.hU.hs(1) : void 0 : void(aw.ht(aD.eo) && b8.hU.hp())
 	        }
         }
 
@@ -9812,7 +9812,7 @@ function aOB() {
 	}, 0, 1)), aRd.unshift(new w(L(460), function() {
 		!aD.hD && aM.qS(aD.eo) && (b8.hU.pf(), t.x(), aM.hE) && aM.a31()
 	}, 0, 1)), aRd.unshift(new w(L(461), function() {
-		!aD.hD && aw.ht(aD.eo) && (bV.a6K(2), b8.hU.hp(), t.x(), aM.hE) && aM.a31()
+		!aD.hD && window.__TTWC && window.__TTWC.isHost && aw.ht(aD.eo) && (bV.a6K(2), b8.hU.hp(), t.x(), aM.hE) && aM.a31()
 	}, 0, 1))), 1 === a0.id && 5 <= a0.dw && aRd.push(new w(L(457), function() {
 		a0.a1.a1w()
 	})), aOd = new vF(L(458), vG), aRc = new rP(aRd, aOd.vL)
