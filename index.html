@@ -716,103 +716,58 @@ window.__TTWC.isHost = false;
 
 <script>
 (function () {
-  function installPeaceTrace() {
+  function installPeaceCallTrace() {
     try {
-      if (!window.b0 || !b0.pL || typeof b0.pL.pY !== "function") return false;
       if (!window.b8 || !b8.hU || typeof b8.hU.hp !== "function") return false;
+      if (!window.b0 || !b0.pL || typeof b0.pL.pY !== "function") return false;
       if (!window.b8 || !b8.pG || typeof b8.pG.hp !== "function") return false;
-      if (!window.b0 || !b0.y || typeof b0.y.send !== "function") return false;
 
       window.__TTWC = window.__TTWC || {};
-      if (window.__TTWC._peaceTraceInstalled) return true;
+      if (window.__TTWC._peaceCallTraceInstalled) return true;
 
       const originalHUHP = b8.hU.hp;
-      const originalPGHP = b8.pG.hp;
       const originalPY = b0.pL.pY;
-      const originalSend = b0.y.send;
+      const originalPGHP = b8.pG.hp;
 
-      function toBytes(data) {
-        try {
-          if (!data) return null;
-          if (data instanceof ArrayBuffer) {
-            return Array.from(new Uint8Array(data));
-          }
-          if (ArrayBuffer.isView(data)) {
-            return Array.from(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
-          }
-          return data;
-        } catch (e) {
-          return "bytes-failed";
-        }
+      function shortState() {
+        return {
+          isHost: !!(window.__TTWC && window.__TTWC.isHost),
+          aD_kj: window.aD ? aD.kj : undefined,
+          aD_kh: window.aD ? aD.kh : undefined,
+          aD_hD: window.aD ? aD.hD : undefined,
+          aD_a0s: window.aD ? aD.a0s : undefined
+        };
       }
 
       b8.hU.hp = function () {
-        console.log("[TTWC TRACE] b8.hU.hp called", {
-          isHost: !!(window.__TTWC && window.__TTWC.isHost),
-          aD_kj: window.aD ? aD.kj : undefined,
-          aD_kh: window.aD ? aD.kh : undefined,
-          aD_hD: window.aD ? aD.hD : undefined,
-          aD_a0s: window.aD ? aD.a0s : undefined
-        });
-
+        console.log("[TTWC PEACE TRACE] b8.hU.hp", shortState());
+        console.trace("[TTWC PEACE TRACE] stack from b8.hU.hp");
         return originalHUHP.apply(this, arguments);
       };
 
-      b8.pG.hp = function () {
-        console.log("[TTWC TRACE] b8.pG.hp called", {
-          args: Array.from(arguments),
-          isHost: !!(window.__TTWC && window.__TTWC.isHost),
-          aD_kj: window.aD ? aD.kj : undefined,
-          aD_kh: window.aD ? aD.kh : undefined,
-          aD_hD: window.aD ? aD.hD : undefined,
-          aD_a0s: window.aD ? aD.a0s : undefined
-        });
-
-        return originalPGHP.apply(this, arguments);
-      };
-
       b0.pL.pY = function () {
-        console.log("[TTWC TRACE] b0.pL.pY called", {
-          args: Array.from(arguments),
-          isHost: !!(window.__TTWC && window.__TTWC.isHost),
-          aD_kj: window.aD ? aD.kj : undefined,
-          aD_kh: window.aD ? aD.kh : undefined,
-          aD_hD: window.aD ? aD.hD : undefined,
-          aD_a0s: window.aD ? aD.a0s : undefined
-        });
-
+        console.log("[TTWC PEACE TRACE] b0.pL.pY args=", Array.from(arguments), shortState());
+        console.trace("[TTWC PEACE TRACE] stack from b0.pL.pY");
         return originalPY.apply(this, arguments);
       };
 
-      b0.y.send = function () {
-        const bytes = toBytes(arguments[1]);
-
-        if (Array.isArray(bytes) && (bytes[0] === 38 || bytes[0] === 39)) {
-          console.log("[TTWC TRACE] b0.y.send peace-related packet", {
-            arg0: arguments[0],
-            arg1Bytes: JSON.stringify(bytes),
-            isHost: !!(window.__TTWC && window.__TTWC.isHost),
-            aD_kj: window.aD ? aD.kj : undefined,
-            aD_kh: window.aD ? aD.kh : undefined,
-            aD_hD: window.aD ? aD.hD : undefined,
-            aD_a0s: window.aD ? aD.a0s : undefined
-          });
-        }
-
-        return originalSend.apply(this, arguments);
+      b8.pG.hp = function () {
+        console.log("[TTWC PEACE TRACE] b8.pG.hp args=", Array.from(arguments), shortState());
+        console.trace("[TTWC PEACE TRACE] stack from b8.pG.hp");
+        return originalPGHP.apply(this, arguments);
       };
 
-      window.__TTWC._peaceTraceInstalled = true;
-      console.log("TTWC: peace trace installed");
+      window.__TTWC._peaceCallTraceInstalled = true;
+      console.log("TTWC peace call trace installed");
       return true;
     } catch (e) {
-      console.log("TTWC peace trace install error:", e);
+      console.log("TTWC peace call trace install error:", e);
       return false;
     }
   }
 
   const interval = setInterval(function () {
-    if (installPeaceTrace()) {
+    if (installPeaceCallTrace()) {
       clearInterval(interval);
     }
   }, 500);
