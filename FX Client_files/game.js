@@ -384,7 +384,7 @@ function dC() {
 			}
 		}
 			}, this.hp = function() {
-		        if (!aD.hD && !aM.hE && bA.gQ.hF(1) && window.__TTWC && window.__TTWC.isHost) return aw.hq ? aw.hr(aD.eo) ? void b8.hU.hs(1) : void 0 : void(aw.ht(aD.eo) && b8.hU.hp())
+		        if (!aD.hD && !aM.hE && bA.gQ.hF(1) && window.__TTWC && (window.__TTWC.isHost || (window.__TTWC.peaceEnabled && aD.kj))) return aw.hq ? aw.hr(aD.eo) ? void b8.hU.hs(1) : void 0 : void(aw.ht(aD.eo) && b8.hU.hp())
 	        }
         }
 
@@ -4295,16 +4295,17 @@ function cq() {
 		this.hq && (fD = z2(), vV.drawImage(canvas, h.i - this.i - bc.gap, fD))
 	}, this.ht = function(player) {
 		if (window.__TTWC && window.__TTWC.isHost && player === aD.eo) return !0;
-	    if (0 !== a8u) return !1;
-	    if (!bA.gQ.hF(1)) return !1;
-	    if (!bA.gQ.hG(player)) return !1;
-	    if (10 <= kA[player] && !bA.gQ.a4c(player, 9)) return !1;
-	    if (!aD.kj) {
-	    	player = bf.kM();
-		    if (player < a8w + 100) return !!void 0;
-		    if (player < 1607) return !!void 0
-		}
-		return !!1
+        if (!(window.__TTWC && window.__TTWC.peaceEnabled)) return !1;
+        if (0 !== a8u) return !1;
+        if (!bA.gQ.hF(1)) return !1;
+        if (!bA.gQ.hG(player)) return !1;
+        if (10 <= kA[player] && !bA.gQ.a4c(player, 9)) return !1;
+        if (!aD.kj) {
+	        player = bf.kM();
+	        if (player < a8w + 100) return !!void 0;
+	        if (player < 1607) return !!void 0
+        }
+        return !!1
 	}, this.hr = function(gc) {
 		if (!bA.gQ.hF(1)) return !1;
 		if (!bA.gQ.hG(gc)) return !1;
@@ -9812,7 +9813,7 @@ function aOB() {
 	}, 0, 1)), aRd.unshift(new w(L(460), function() {
 		!aD.hD && aM.qS(aD.eo) && (b8.hU.pf(), t.x(), aM.hE) && aM.a31()
 	}, 0, 1)), aRd.unshift(new w(L(461), function() {
-		!aD.hD && window.__TTWC && window.__TTWC.isHost && aw.ht(aD.eo) && (bV.a6K(2), b8.hU.hp(), t.x(), aM.hE) && aM.a31()
+		!aD.hD && window.__TTWC && (window.__TTWC.isHost || (window.__TTWC.peaceEnabled && aD.kj)) && aw.ht(aD.eo) && (bV.a6K(2), b8.hU.hp(), t.x(), aM.hE) && aM.a31()
 	}, 0, 1))), 1 === a0.id && 5 <= a0.dw && aRd.push(new w(L(457), function() {
 		a0.a1.a1w()
 	})), aOd = new vF(L(458), vG), aRc = new rP(aRd, aOd.vL)
