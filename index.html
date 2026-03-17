@@ -621,9 +621,9 @@ window.__TTWC._customLobbySend = null;
 
         __fx.customLobby.setSendFunction = function (sendFn) {
           window.__TTWC._customLobbySend = sendFn;
+          console.log("TTWC: captured custom lobby send function");
           return originalSetSendFunction.apply(this, arguments);
         };
-
         window.__TTWC._sendHookPatched = true;
         console.log("TTWC: custom lobby send hook installed");
       }
@@ -646,6 +646,7 @@ window.__TTWC._customLobbySend = null;
               } else if (msg && msg.t === "peaceToggle") {
   window.__TTWC.peaceEnabled = !!msg.d;
   console.log("TTWC peace toggle received:", window.__TTWC.peaceEnabled ? "ON" : "OFF");
+  updatePeaceIndicator();
   try {
     let el = document.getElementById("ttwcPeaceIndicator");
 
@@ -710,19 +711,13 @@ window.__TTWC._customLobbySend = null;
     new DataView(buffer).setUint8(0, 120);
     new Uint8Array(buffer, 1).set(encoded);
 
-    if (window.b0 && b0.y && typeof b0.y.send === "function") {
-      b0.y.send(1, buffer);
-      console.log("TTWC: peace toggle sent via b0.y.send");
-      return true;
-    }
-
     if (window.__TTWC._customLobbySend && typeof window.__TTWC._customLobbySend === "function") {
       window.__TTWC._customLobbySend(1, buffer);
-      console.log("TTWC: peace toggle sent via captured custom lobby send");
+      console.log("TTWC: peace toggle sent via custom lobby send");
       return true;
     }
 
-    console.log("TTWC: no send function available for peace toggle");
+    console.log("TTWC: custom lobby send function not ready");
     return false;
   } catch (e) {
     console.log("TTWC sendPeaceToggle error:", e);
@@ -759,6 +754,7 @@ window.__TTWC._customLobbySend = null;
     console.log("TTWC updatePeaceIndicator error:", e);
   }
 }
+
 
 window.__TTWC.togglePeace = function () {
   try {
