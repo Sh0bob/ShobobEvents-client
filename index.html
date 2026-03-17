@@ -617,16 +617,35 @@ window.__TTWC._customLobbySend = null;
       if (!window.__fx || !__fx.customLobby) return false;
 
       if (__fx.customLobby.setSendFunction && !window.__TTWC._sendHookPatched) {
-        const originalSetSendFunction = __fx.customLobby.setSendFunction;
+  const originalSetSendFunction = __fx.customLobby.setSendFunction;
 
-        __fx.customLobby.setSendFunction = function (sendFn) {
-          window.__TTWC._customLobbySend = sendFn;
-          console.log("TTWC: captured custom lobby send function");
-          return originalSetSendFunction.apply(this, arguments);
-        };
-        window.__TTWC._sendHookPatched = true;
-        console.log("TTWC: custom lobby send hook installed");
+  __fx.customLobby.setSendFunction = function (sendFn) {
+    window.__TTWC._customLobbySend = sendFn;
+    console.log("TTWC: captured custom lobby send function");
+    return originalSetSendFunction.apply(this, arguments);
+  };
+
+  window.__TTWC._sendHookPatched = true;
+  console.log("TTWC: custom lobby send hook installed");
+
+  // Fallback: if FX already called setSendFunction before our patch loaded,
+  // seed the sender from the live socket send method.
+  try {
+    if (!window.__TTWC._customLobbySend && window.b0 && b0.y && typeof b0.y.send === "function") {
+      window.__TTWC._customLobbySend = b0.y.send.bind(b0.y);
+      console.log("TTWC: seeded custom lobby send from b0.y.send.bind(b0.y)");
+
+      try {
+        __fx.customLobby.setSendFunction(window.__TTWC._customLobbySend);
+        console.log("TTWC: re-registered custom lobby send function");
+      } catch (e) {
+        console.log("TTWC: re-register send function failed:", e);
       }
+    }
+  } catch (e) {
+    console.log("TTWC: fallback send seed failed:", e);
+  }
+}
 
       if (__fx.customLobby.isCustomMessage && !window.__TTWC._hostTrackingPatched) {
         const originalIsCustomMessage = __fx.customLobby.isCustomMessage;
@@ -710,6 +729,18 @@ window.__TTWC._customLobbySend = null;
 
     new DataView(buffer).setUint8(0, 120);
     new Uint8Array(buffer, 1).set(encoded);
+
+    if (!window.__TTWC._customLobbySend && window.b0 && b0.y && typeof b0.y.send === "function") {
+      window.__TTWC._customLobbySend = b0.y.send.bind(b0.y);
+      console.log("TTWC: late-seeded custom lobby send from b0.y.send.bind(b0.y)");
+
+      try {
+        __fx.customLobby.setSendFunction(window.__TTWC._customLobbySend);
+        console.log("TTWC: late re-registered custom lobby send function");
+      } catch (e) {
+        console.log("TTWC: late re-register failed:", e);
+      }
+    }
 
     if (window.__TTWC._customLobbySend && typeof window.__TTWC._customLobbySend === "function") {
       window.__TTWC._customLobbySend(1, buffer);
