@@ -734,6 +734,7 @@ window.__TTWC = window.__TTWC || {};
 
       TTWC.peace.originalSend = b8.hU.hp;
       TTWC.peace.originalAwHt = aw.ht;
+      TTWC.peace.originalPGHp = b8.pG && typeof b8.pG.hp === "function" ? b8.pG.hp : null;
 
       // Hide/block normal peace availability for non-hosts in custom lobbies
       aw.ht = function(player) {
@@ -757,6 +758,38 @@ window.__TTWC = window.__TTWC || {};
         return TTWC.peace.originalSend.apply(this, arguments);
       };
 
+      // Patch the custom-lobby local peace path too.
+      // In custom lobbies, b8.hU.hp() routes into b8.pG.hp(aD.eo),
+      // and that function has its own aw.ht(player) dead/alive check.
+      // We bypass that only for the host.
+      if (b8.pG && typeof b8.pG.hp === "function") {
+        b8.pG.hp = function(player) {
+          if (isCustomLobbyActive()) {
+           if (!isHost()) {
+             console.log("[TTWC PEACE] blocked custom-lobby peace from non-host");
+             return;
+            }
+
+            if (typeof aD !== "undefined" && player === aD.eo) {
+              console.log("[TTWC PEACE] host bypassed custom-lobby peace gate", {
+                deadByNormalCheck: !!(
+                  TTWC.peace.originalAwHt &&
+                  !TTWC.peace.originalAwHt.call(aw, player)
+                )
+              });
+
+             // This is exactly what the original function does
+             // AFTER aw.ht(player) succeeds.
+              b9.qB.qC(5, player, 513);
+              aw.hp(player);
+              return;
+            }
+         }
+
+          return TTWC.peace.originalPGHp.apply(this, arguments);
+        };
+      }
+
       TTWC.peace.patched = true;
       console.log("[TTWC PEACE] host-only peace patch active");
       return true;
@@ -767,29 +800,47 @@ window.__TTWC = window.__TTWC || {};
   }
 
   function sendHostPeaceDirect() {
-    try {
-      if (!isCustomLobbyActive()) return;
-      if (!isHost()) {
-        console.log("[TTWC PEACE] not host, direct peace send denied");
-        return;
-      }
-      if (!TTWC.peace.originalSend) {
-        console.log("[TTWC PEACE] original sender not ready");
-        return;
-      }
-
-      const now = Date.now();
-      if (now - TTWC.peace.lastSendAt < 700) {
-        return;
-      }
-      TTWC.peace.lastSendAt = now;
-
-      console.log("[TTWC PEACE] host direct peace send");
-      TTWC.peace.originalSend.call(b8.hU);
-    } catch (e) {
-      console.log("[TTWC PEACE] sendHostPeaceDirect error:", e);
+  try {
+    if (!isCustomLobbyActive()) return;
+    if (!isHost()) {
+      console.log("[TTWC PEACE] not host, direct peace send denied");
+      return;
     }
+
+    const now = Date.now();
+    if (now - TTWC.peace.lastSendAt < 700) {
+      return;
+    }
+    TTWC.peace.lastSendAt = now;
+
+    if (typeof aD === "undefined") {
+      console.log("[TTWC PEACE] aD not ready");
+      return;
+    }
+
+    console.log("[TTWC PEACE] host direct peace send", {
+      customLobby: true,
+      self: aD.eo,
+      normalCheckAllows: !!(
+        TTWC.peace.originalAwHt &&
+        TTWC.peace.originalAwHt.call(aw, aD.eo)
+      )
+    });
+
+    // In custom lobbies, call the patched custom-lobby peace function.
+    if (b8.pG && typeof b8.pG.hp === "function") {
+      b8.pG.hp(aD.eo);
+      return;
+    }
+
+    // Fallback
+    if (TTWC.peace.originalSend) {
+      TTWC.peace.originalSend.call(b8.hU);
+    }
+  } catch (e) {
+    console.log("[TTWC PEACE] sendHostPeaceDirect error:", e);
   }
+}
 
   // Host-only floating button
   const peaceBtn = document.createElement("button");
