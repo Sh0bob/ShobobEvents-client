@@ -10058,7 +10058,7 @@ function aTH() {
 		return aTa[aB].aTA && aTZ[aB].eY()
 	}, this.send = function(a22, aC) {
 		0 !== a22 && aTf(a22), aTZ[a22].send(aC)
-	}, __fx.customLobby.setSendFunction(this.send), this.a2h = function(a22) {
+	}, __fx.customLobby.setSendFunction(this.send), window.__TTWC = window.__TTWC || {}, window.__TTWC._customLobbySend = this.send.bind(this), console.log("TTWC: game.js captured real custom lobby sender"), this.a2h = function(a22) {
 		8 === aa.a27() && (aTa[a22].aTc = !0, b0.mg.aTs = !0)
 	}, this.close = function(a22, aTt) {
 		aTm(a22) && aTZ[a22].close(aTt)
