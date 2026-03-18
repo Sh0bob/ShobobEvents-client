@@ -763,35 +763,6 @@ window.__TTWC = window.__TTWC || {};
   return TTWC.peace.originalAwHt.apply(this, arguments);
 };
 
-      // For host:
-      // - if alive -> use ORIGINAL function so it propagates correctly
-      // - if dead  -> do local bypass attempt
-      if (typeof aD !== "undefined" && player === aD.eo) {
-        const normalCheckAllows = !!(
-          TTWC.peace.originalAwHt &&
-          TTWC.peace.originalAwHt.call(aw, player)
-        );
-
-        if (normalCheckAllows) {
-          console.log("[TTWC PEACE] alive host using original custom-lobby peace path");
-          return TTWC.peace.originalPGHp.apply(this, arguments);
-        }
-
-        console.log("[TTWC PEACE] dead host bypassed custom-lobby peace gate", {
-          deadByNormalCheck: true
-        });
-
-        // Dead-host fallback only
-        b9.qB.qC(5, player, 513);
-        aw.hp(player);
-        return;
-      }
-    }
-
-    return TTWC.peace.originalPGHp.apply(this, arguments);
-  };
-}
-
       TTWC.peace.patched = true;
       console.log("[TTWC PEACE] host-only peace patch active");
       return true;
