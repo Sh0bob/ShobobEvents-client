@@ -734,41 +734,34 @@ window.__TTWC = window.__TTWC || {};
 
       TTWC.peace.originalSend = b8.hU.hp;
       TTWC.peace.originalAwHt = aw.ht;
-      TTWC.peace.originalPGHp = b8.pG && typeof b8.pG.hp === "function" ? b8.pG.hp : null;
 
       // Hide/block normal peace availability for non-hosts in custom lobbies
       aw.ht = function(player) {
-        if (
-          isCustomLobbyActive() &&
-          typeof aD !== "undefined" &&
-          player === aD.eo &&
-          !isHost()
-        ) {
-          return false;
-        }
-        return TTWC.peace.originalAwHt.apply(this, arguments);
-      };
+  // Allow one forced host peace call while dead, but only for self in custom lobby
+  if (
+    isCustomLobbyActive() &&
+    TTWC.peace.forceHostPeaceOnce &&
+    typeof aD !== "undefined" &&
+    player === aD.eo &&
+    isHost()
+  ) {
+    console.log("[TTWC PEACE] temporary aw.ht host bypass");
+    TTWC.peace.forceHostPeaceOnce = false;
+    return true;
+  }
 
-      // Hard-block outbound peace packet for non-hosts in custom lobbies
-      b8.hU.hp = function() {
-        if (isCustomLobbyActive() && !isHost()) {
-          console.log("[TTWC PEACE] blocked peace send from non-host");
-          return;
-        }
-        return TTWC.peace.originalSend.apply(this, arguments);
-      };
+  // Block non-hosts from calling peace in custom lobbies
+  if (
+    isCustomLobbyActive() &&
+    typeof aD !== "undefined" &&
+    player === aD.eo &&
+    !isHost()
+  ) {
+    return false;
+  }
 
-      // Patch the custom-lobby local peace path too.
-      // In custom lobbies, b8.hU.hp() routes into b8.pG.hp(aD.eo),
-      // and that function has its own aw.ht(player) dead/alive check.
-      // We bypass that only for the host.
-      if (b8.pG && typeof b8.pG.hp === "function") {
-  b8.pG.hp = function(player) {
-    if (isCustomLobbyActive()) {
-      if (!isHost()) {
-        console.log("[TTWC PEACE] blocked custom-lobby peace from non-host");
-        return;
-      }
+  return TTWC.peace.originalAwHt.apply(this, arguments);
+};
 
       // For host:
       // - if alive -> use ORIGINAL function so it propagates correctly
@@ -815,6 +808,10 @@ window.__TTWC = window.__TTWC || {};
       console.log("[TTWC PEACE] not host, direct peace send denied");
       return;
     }
+    if (!TTWC.peace.originalSend) {
+      console.log("[TTWC PEACE] original sender not ready");
+      return;
+    }
 
     const now = Date.now();
     if (now - TTWC.peace.lastSendAt < 700) {
@@ -838,20 +835,13 @@ window.__TTWC = window.__TTWC || {};
       normalCheckAllows
     });
 
-    // Alive host: use the original sender path so the vote goes through normally
-    if (normalCheckAllows && TTWC.peace.originalSend) {
-      return TTWC.peace.originalSend.call(b8.hU);
+    // If host is dead, allow exactly one aw.ht(self) pass-through
+    if (!normalCheckAllows) {
+      TTWC.peace.forceHostPeaceOnce = true;
     }
 
-    // Dead host: route through patched custom-lobby handler
-    if (b8.pG && typeof b8.pG.hp === "function") {
-      return b8.pG.hp(aD.eo);
-    }
-
-    // Final fallback
-    if (TTWC.peace.originalSend) {
-      return TTWC.peace.originalSend.call(b8.hU);
-    }
+    // Always use the ORIGINAL send path
+    return TTWC.peace.originalSend.call(b8.hU);
   } catch (e) {
     console.log("[TTWC PEACE] sendHostPeaceDirect error:", e);
   }
