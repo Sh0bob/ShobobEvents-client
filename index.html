@@ -763,32 +763,41 @@ window.__TTWC = window.__TTWC || {};
       // and that function has its own aw.ht(player) dead/alive check.
       // We bypass that only for the host.
       if (b8.pG && typeof b8.pG.hp === "function") {
-        b8.pG.hp = function(player) {
-          if (isCustomLobbyActive()) {
-           if (!isHost()) {
-             console.log("[TTWC PEACE] blocked custom-lobby peace from non-host");
-             return;
-            }
-
-            if (typeof aD !== "undefined" && player === aD.eo) {
-              console.log("[TTWC PEACE] host bypassed custom-lobby peace gate", {
-                deadByNormalCheck: !!(
-                  TTWC.peace.originalAwHt &&
-                  !TTWC.peace.originalAwHt.call(aw, player)
-                )
-              });
-
-             // This is exactly what the original function does
-             // AFTER aw.ht(player) succeeds.
-              b9.qB.qC(5, player, 513);
-              aw.hp(player);
-              return;
-            }
-         }
-
-          return TTWC.peace.originalPGHp.apply(this, arguments);
-        };
+  b8.pG.hp = function(player) {
+    if (isCustomLobbyActive()) {
+      if (!isHost()) {
+        console.log("[TTWC PEACE] blocked custom-lobby peace from non-host");
+        return;
       }
+
+      // For host:
+      // - if alive -> use ORIGINAL function so it propagates correctly
+      // - if dead  -> do local bypass attempt
+      if (typeof aD !== "undefined" && player === aD.eo) {
+        const normalCheckAllows = !!(
+          TTWC.peace.originalAwHt &&
+          TTWC.peace.originalAwHt.call(aw, player)
+        );
+
+        if (normalCheckAllows) {
+          console.log("[TTWC PEACE] alive host using original custom-lobby peace path");
+          return TTWC.peace.originalPGHp.apply(this, arguments);
+        }
+
+        console.log("[TTWC PEACE] dead host bypassed custom-lobby peace gate", {
+          deadByNormalCheck: true
+        });
+
+        // Dead-host fallback only
+        b9.qB.qC(5, player, 513);
+        aw.hp(player);
+        return;
+      }
+    }
+
+    return TTWC.peace.originalPGHp.apply(this, arguments);
+  };
+}
 
       TTWC.peace.patched = true;
       console.log("[TTWC PEACE] host-only peace patch active");
@@ -818,24 +827,30 @@ window.__TTWC = window.__TTWC || {};
       return;
     }
 
+    const normalCheckAllows = !!(
+      TTWC.peace.originalAwHt &&
+      TTWC.peace.originalAwHt.call(aw, aD.eo)
+    );
+
     console.log("[TTWC PEACE] host direct peace send", {
       customLobby: true,
       self: aD.eo,
-      normalCheckAllows: !!(
-        TTWC.peace.originalAwHt &&
-        TTWC.peace.originalAwHt.call(aw, aD.eo)
-      )
+      normalCheckAllows
     });
 
-    // In custom lobbies, call the patched custom-lobby peace function.
-    if (b8.pG && typeof b8.pG.hp === "function") {
-      b8.pG.hp(aD.eo);
-      return;
+    // Alive host: use the original sender path so the vote goes through normally
+    if (normalCheckAllows && TTWC.peace.originalSend) {
+      return TTWC.peace.originalSend.call(b8.hU);
     }
 
-    // Fallback
+    // Dead host: route through patched custom-lobby handler
+    if (b8.pG && typeof b8.pG.hp === "function") {
+      return b8.pG.hp(aD.eo);
+    }
+
+    // Final fallback
     if (TTWC.peace.originalSend) {
-      TTWC.peace.originalSend.call(b8.hU);
+      return TTWC.peace.originalSend.call(b8.hU);
     }
   } catch (e) {
     console.log("[TTWC PEACE] sendHostPeaceDirect error:", e);
