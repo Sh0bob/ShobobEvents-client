@@ -265,7 +265,7 @@
 
   function getAnon(realName) {
     if (!TTWC.anonMap.has(realName)) {
-      TTWC.anonMap.set(realName, "Anon " + Math.floor(1000 + Math.random() * 9000));
+      TTWC.anonMap.set(realName, "Anon " + Math.floor(100 + Math.random() * 900));
     }
     return TTWC.anonMap.get(realName);
   }
