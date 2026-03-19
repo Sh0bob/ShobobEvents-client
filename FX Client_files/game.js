@@ -4293,17 +4293,24 @@ function cq() {
 	}, this.vU = function() {
 		var fD;
 		this.hq && (fD = z2(), vV.drawImage(canvas, h.i - this.i - bc.gap, fD))
-	}, this.ht = function(player) {
-		if (0 !== a8u) return !1;
-		if (!bA.gQ.hF(1)) return !1;
-		if (!bA.gQ.hG(player)) return !1;
-		if (10 <= kA[player] && !bA.gQ.a4c(player, 9)) return !1;
-		if (!aD.kj) {
-			player = bf.kM();
-			if (player < a8w + 100) return !!void 0;
-			if (player < 1607) return !!void 0
-		}
-		return !!1
+	}, 
+		// Allow host to bypass dead check
+        if (!bA.gQ.hG(player)) {
+           try {
+               if (
+                  window.__TTWC &&
+                  __TTWC.peace &&
+                  __TTWC.peace.isHost &&
+                  typeof aD !== "undefined" &&
+                  player === aD.eo
+              ) {
+                console.log("[TTWC PEACE] host bypassed dead check in aw.ht");
+             } else {
+                  return !1;
+             }
+         } catch (e) {
+             return !1;
+         }
 	}, this.hr = function(gc) {
 		if (!bA.gQ.hF(1)) return !1;
 		if (!bA.gQ.hG(gc)) return !1;
