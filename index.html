@@ -946,20 +946,14 @@ window.__TTWC = window.__TTWC || {};
       };
 
       b8.pG.hp = function(player) {
-        let allowed = undefined;
-        try {
-          allowed = typeof aw !== "undefined" && typeof aw.ht === "function" ? aw.ht(player) : undefined;
-        } catch (e) {}
+  console.log("[TTWC TRACE] b8.pG.hp called", {
+    player,
+    self: typeof aD !== "undefined" ? aD.eo : undefined,
+    forceHostPeaceOnce: !!TTWC.peace.forceHostPeaceOnce
+  });
 
-        console.log("[TTWC TRACE] b8.pG.hp called", {
-          player,
-          allowedByAwHt: allowed,
-          self: typeof aD !== "undefined" ? aD.eo : undefined
-        });
-
-        return TTWC.peace._origTrace_pGhp.apply(this, arguments);
-      };
-
+  return TTWC.peace._origTrace_pGhp.apply(this, arguments);
+};
       b9.qB.qC = function() {
         const args = Array.from(arguments);
         if (args[0] === 5 && args[2] === 513) {
