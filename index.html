@@ -513,6 +513,42 @@
 })();
 </script>
 <script>
+(() => {
+  const originalDrawImage = CanvasRenderingContext2D.prototype.drawImage;
+
+  function onMainMenu() {
+    try {
+      return window.MenuManager?.getState?.() === 6;
+    } catch {
+      return false;
+    }
+  }
+
+  function isFxTitleLogo(img) {
+    return !!img && img.tagName === "IMG" && img.width === 6638 && img.height === 768;
+  }
+
+  function isFxSmallLogo(img) {
+    return !!img && img.tagName === "IMG" && img.width === 80 && img.height === 80;
+  }
+
+  CanvasRenderingContext2D.prototype.drawImage = function (...args) {
+    try {
+      const img = args[0];
+
+      if (onMainMenu() && (isFxTitleLogo(img) || isFxSmallLogo(img))) {
+        return;
+      }
+    } catch (e) {}
+
+    return originalDrawImage.apply(this, args);
+  };
+
+  console.log("[TTWC] FX menu logos blocked on main menu");
+})();
+</script>
+  
+<script>
 window.__TTWC = window.__TTWC || {};
 
 (function () {
