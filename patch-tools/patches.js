@@ -8,18 +8,18 @@ function replaceOne(source, regex, replacement, label) {
 
 function applyPatches(source, assets) {
   source = replaceOne(
-    source,
-    /aHg\(6,\s*"territorial\.io",\s*6,\s*"[^"]+"\s*\)/,
-    `aHg(6, "territorial.io", 8, "${assets.ttwcLogo}")`,
-    "big territorial.io logo"
-  );
+  source,
+  /aHg\(6,\s*"territorial\.io",\s*6,\s*"[^"]+"\s*\)/,
+  `aHg(6, "territorial.io", 6, "${assets.transparentPixel}")`,
+  "hide territorial.io title"
+);
 
   source = replaceOne(
   source,
   /aHg\(22,\s*"logo",\s*8,\s*"[^"]+"\s*\)/,
-  `aHg(22, "logo", 6, "${assets.transparentPixel}")`,
-  "remove small logo"
-  );
+  `aHg(22, "logo", 8, "${assets.ttwcLogo}")`,
+  "use TTWC logo for logo asset"
+);
 
   source = replaceOne(
   source,
