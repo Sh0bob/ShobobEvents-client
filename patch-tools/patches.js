@@ -54,10 +54,8 @@ vV.setTransform(textLength, 0, 0, textLength, aQZ.fB - .035 * aQZ.i, aQZ.fD - 53
 
   source = replaceOne(
   source,
-  /this\.vU\s*=\s*function\(\)\s*\{\s*8 !== a1y && 10 !== a1y && \(vV\.imageSmoothingEnabled = !0,\s*this\.z0\(\),\s*0 !== a1y && \(aT\.vU\(\),\s*aO\.vU\(\),\s*this\.aHH\(\),\s*bY\.vU\(\)\),\s*0 !== a1y && 6 === a1y && aZ\.vU\(\),\s*bZ\.vU\(\),\s*t\.vU\(\)\s*\)/,
-  `this.vU = function() {
-		8 !== a1y && 10 !== a1y && (vV.imageSmoothingEnabled = !0, this.z0(), 0 !== a1y && (aT.vU(), aO.vU(), this.aHH()), 0 !== a1y && 6 === a1y && aZ.vU(), bZ.vU(), t.vU())
-	}`,
+  /aT\.vU\(\),\s*aO\.vU\(\),\s*this\.aHH\(\),\s*bY\.vU\(\)/,
+  `aT.vU(), aO.vU(), this.aHH()`,
   "remove next contest panel"
 );
   return source;
