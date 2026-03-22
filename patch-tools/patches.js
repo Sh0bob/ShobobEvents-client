@@ -54,15 +54,8 @@ vV.setTransform(textLength, 0, 0, textLength, aQZ.fB - .035 * aQZ.i, aQZ.fD - 53
 
  source = replaceOne(
   source,
-  /aT\.vU\(\),\s*aO\.vU\(\),\s*this\.aHH\(\),\s*bY\.vU\(\)/,
-  `aT.vU(), aO.vU(), this.aHH()`,
-  "remove bY menu widget"
-);
-
-source = replaceOne(
-  source,
-  /aT\.vU\(\),\s*aO\.vU\(\),\s*this\.aHH\(\)/,
-  `aT.vU(), this.aHH()`,
+  /this\.vU\s*=\s*function\(fD\)\s*\{\s*vV\.lineWidth = 1 \+ Math\.floor\(xq \/ 15\),\s*vV\.translate\(h\.i - xq,\s*fD \+ xp\),\s*vV\.rotate\(-Math\.PI \/ 2\),[\s\S]*?vV\.setTransform\(1,\s*0,\s*0,\s*1,\s*0,\s*0\)\s*\}/,
+  `this.vU = function(fD) {}`,
   "remove next contest bar"
 );
   return source;
