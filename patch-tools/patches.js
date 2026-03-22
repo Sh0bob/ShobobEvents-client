@@ -52,11 +52,18 @@ vV.setTransform(textLength, 0, 0, textLength, aQZ.fB - .035 * aQZ.i, aQZ.fD - 53
   "remove seconds played chart"
 );
 
-  source = replaceOne(
+ source = replaceOne(
   source,
   /aT\.vU\(\),\s*aO\.vU\(\),\s*this\.aHH\(\),\s*bY\.vU\(\)/,
   `aT.vU(), aO.vU(), this.aHH()`,
-  "remove next contest panel"
+  "remove bY menu widget"
+);
+
+source = replaceOne(
+  source,
+  /aT\.vU\(\),\s*aO\.vU\(\),\s*this\.aHH\(\)/,
+  `aT.vU(), this.aHH()`,
+  "remove next contest bar"
 );
   return source;
 }
