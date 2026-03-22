@@ -440,6 +440,18 @@
     applyBox(lobby, targets.lobbyBox);
     applyBox(settings, targets.settingsBox);
 
+    const yOffset = 14;
+
+if (lobby) {
+  const currentTop = parseFloat(lobby.style.top || "0");
+  lobby.style.setProperty("top", `${currentTop + yOffset}px`, "important");
+}
+
+if (settings) {
+  const currentTop = parseFloat(settings.style.top || "0");
+  settings.style.setProperty("top", `${currentTop + yOffset}px`, "important");
+}
+
     // Done — reveal buttons now that layout is correct
     document.body.classList.add("ttwc-ready");
   }
