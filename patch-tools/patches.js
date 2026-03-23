@@ -87,9 +87,9 @@ source = replaceOne(
 
 source = replaceOne(
   source,
-  /,\s*bZ\.vU\(\),\s*t\.vU\(\)/,
-  `, t.vU()`,
-  "remove side menu buttons"
+  /this\.vU\s*=\s*function\(\)\s*\{\s*if\s*\(ec && this\.hq\(\)\)\s*\{\s*var aB;\s*for\s*\(vV\.imageSmoothingEnabled = !0,\s*aB = 0;\s*aB < 5;\s*aB\+\+\)\s*fW\[aB\] && this\.fr\[aB\] && \(vV\.setTransform\(na\[aB\], 0, 0, na\[aB\], fB\[aB\], fD\[aB\]\), vV\.drawImage\(ec\[aB\], 0, 0\)\);\s*vV\.setTransform\(1, 0, 0, 1, 0, 0\)\s*\}\s*\}/,
+  `this.vU = function() {}`,
+  "remove side buttons"
 );
   return source;
 }
